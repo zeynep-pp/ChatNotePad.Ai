@@ -13,6 +13,16 @@ export default function SmartNotePage() {
   const [editedText, setEditedText] = useState("");
   const [loading, setLoading] = useState(false);
   const [copySuccess, setCopySuccess] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  
+  const commandSuggestions = [
+    "Remove all ',' characters",
+    "Replace all 'and' with 'or'",
+    "Capitalize first letter of each sentence",
+    "Convert to uppercase",
+    "Remove extra spaces",
+    "Add bullet points to each line"
+  ];
 
   const handleCommandSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,10 +62,25 @@ export default function SmartNotePage() {
       </header>
       {/* Main Content */}
       <main className="flex-1 w-full px-4 py-4">
-        <div className="w-full max-w-full flex flex-col lg:flex-row gap-4 mb-20">
+        <div className="w-full max-w-full flex flex-col lg:flex-row gap-4 mb-32">
           {/* Left: Editor */}
           <section className="flex-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 flex flex-col min-h-[400px] border border-gray-200 dark:border-gray-700">
-            <div className="font-semibold mb-3 text-gray-800 dark:text-gray-100">Original Note</div>
+            <div className="flex justify-between items-center mb-3">
+              <div className="font-semibold text-gray-800 dark:text-gray-100">Original Note</div>
+              <div className="flex gap-2">
+                {originalText && (
+                  <button
+                    onClick={() => setOriginalText("")}
+                    className="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400 px-2 py-1 rounded text-sm transition-colors"
+                  >
+                    Clear
+                  </button>
+                )}
+                <div className="text-xs text-gray-500 dark:text-gray-400 px-2 py-1">
+                  {originalText.length} chars
+                </div>
+              </div>
+            </div>
             <div className="flex-1 min-h-[300px]">
               <MonacoEditor
                 height="300px"
@@ -69,6 +94,7 @@ export default function SmartNotePage() {
                   wordWrap: "on",
                   fontSize: 13,
                   scrollBeyondLastLine: false,
+                  placeholder: "Start typing your text here... (Supports Markdown formatting)",
                 }}
               />
             </div>
@@ -128,39 +154,117 @@ export default function SmartNotePage() {
               </div>
             ) : (
               <div className="flex-1 flex items-center justify-center text-gray-500 dark:text-gray-400">
-                <div className="text-center">
-                  <svg className="w-12 h-12 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  <p className="text-sm">Enter a command to see the edited text here</p>
+                <div className="text-center max-w-sm">
+                  <div className="bg-blue-50 dark:bg-blue-900/20 rounded-full p-4 w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                    <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                  </div>
+                  <h3 className="font-medium text-gray-800 dark:text-gray-200 mb-2">AI is ready to help!</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Write your text on the left, then use the chat below to transform it with natural language commands.</p>
+                  <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-3 text-left">
+                    <div className="text-xs font-medium text-yellow-800 dark:text-yellow-200 mb-1">💡 Example commands:</div>
+                    <div className="text-xs text-yellow-700 dark:text-yellow-300 space-y-1">
+                      <div>• "Make it more formal"</div>
+                      <div>• "Fix grammar and spelling"</div>
+                      <div>• "Convert to bullet points"</div>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
           </section>
         </div>
       </main>
-      {/* Bottom: Chatbot Command Input */}
-      <form
-        onSubmit={handleCommandSubmit}
-        className="fixed bottom-0 left-0 w-full flex gap-2 px-4 py-3 bg-white/90 dark:bg-gray-900/90 border-t border-gray-200 dark:border-gray-700 z-10"
-        style={{backdropFilter: 'blur(6px)'}}
-      >
-        <input
-          type="text"
-          className="flex-1 rounded border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-900 dark:text-white shadow-sm"
-          placeholder="Enter a command, e.g. Remove all ',' characters."
-          value={command}
-          onChange={e => setCommand(e.target.value)}
-          disabled={loading}
-        />
-        <button
-          type="submit"
-          className="bg-blue-600 text-white px-4 py-2 rounded font-semibold hover:bg-blue-700 transition disabled:opacity-50 shadow-sm"
-          disabled={loading || !command.trim()}
-        >
-          {loading ? "Processing..." : "Send"}
-        </button>
-      </form>
+      {/* Enhanced Chat Interface */}
+      <div className="fixed bottom-0 left-0 w-full bg-white/95 dark:bg-gray-900/95 border-t border-gray-200 dark:border-gray-700 z-10 shadow-lg" style={{backdropFilter: 'blur(8px)'}}>
+        {/* Command Suggestions */}
+        {showSuggestions && (
+          <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+            <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Try these commands:</div>
+            <div className="flex flex-wrap gap-2">
+              {commandSuggestions.map((suggestion, index) => (
+                <button
+                  key={index}
+                  onClick={() => {
+                    setCommand(suggestion);
+                    setShowSuggestions(false);
+                  }}
+                  className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-3 py-1 rounded-full text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                >
+                  {suggestion}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        {/* Main Chat Input */}
+        <div className="px-4 py-4">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex items-center gap-3">
+              {/* AI Icon */}
+              <div className="bg-blue-100 dark:bg-blue-900 p-2 rounded-full">
+                <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+              </div>
+              
+              {/* Input Form */}
+              <form onSubmit={handleCommandSubmit} className="flex-1 flex gap-2">
+                <div className="flex-1 relative">
+                  <input
+                    type="text"
+                    className="w-full rounded-xl border border-gray-300 dark:border-gray-600 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-white shadow-sm text-base"
+                    placeholder="✨ Tell me what to do with your text... (e.g., Remove all commas)"
+                    value={command}
+                    onChange={e => setCommand(e.target.value)}
+                    disabled={loading}
+                    onFocus={() => setShowSuggestions(true)}
+                  />
+                  {/* Suggestions toggle */}
+                  <button
+                    type="button"
+                    onClick={() => setShowSuggestions(!showSuggestions)}
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </button>
+                </div>
+                
+                <button
+                  type="submit"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm flex items-center gap-2"
+                  disabled={loading || !command.trim()}
+                >
+                  {loading ? (
+                    <>
+                      <svg className="animate-spin w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                      </svg>
+                      Send
+                    </>
+                  )}
+                </button>
+              </form>
+            </div>
+            
+            {/* Quick tip */}
+            <div className="mt-2 text-xs text-gray-500 dark:text-gray-400 text-center">
+              💡 Tip: Click the suggestions above or describe what you want to do with your text in natural language
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
