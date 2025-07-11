@@ -1,6 +1,6 @@
 module.exports = {
   purge: [],
-  darkMode: false, // or 'media' or 'class'
+  darkMode: 'class', // Enable class-based dark mode only
   content: [
     "./app/**/*.{js,ts,jsx,tsx}",
   ],

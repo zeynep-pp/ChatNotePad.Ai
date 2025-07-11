@@ -1,1 +1,99 @@
-@import "tailwindcss"; 
+@import "tailwindcss";
+
+/* Completely override system dark mode preference */
+@media (prefers-color-scheme: dark) {
+  .dark\:bg-gray-900\/80 {
+    background-color: rgb(243 244 246) !important; /* Force light background */
+  }
+  
+  .dark\:from-gray-900 {
+    --tw-gradient-from: rgb(243 244 246) !important;
+  }
+  
+  .dark\:to-gray-800 {
+    --tw-gradient-to: rgb(229 231 235) !important;
+  }
+  
+  .dark\:bg-gray-800 {
+    background-color: rgb(255 255 255) !important;
+  }
+  
+  .dark\:bg-gray-700 {
+    background-color: rgb(249 250 251) !important;
+  }
+  
+  .dark\:text-white {
+    color: rgb(17 24 39) !important;
+  }
+  
+  .dark\:text-gray-300 {
+    color: rgb(75 85 99) !important;
+  }
+  
+  .dark\:text-gray-100 {
+    color: rgb(31 41 55) !important;
+  }
+  
+  .dark\:border-gray-700 {
+    border-color: rgb(209 213 219) !important;
+  }
+}
+
+/* Apply dark styles only when .dark class is present */
+.dark .dark\:bg-gray-900\/80 {
+  background-color: color-mix(in oklab, rgb(17 24 39) 80%, transparent) !important;
+}
+
+.dark .dark\:from-gray-900 {
+  --tw-gradient-from: rgb(17 24 39) !important;
+}
+
+.dark .dark\:to-gray-800 {
+  --tw-gradient-to: rgb(31 41 55) !important;
+}
+
+.dark .dark\:bg-gray-800 {
+  background-color: rgb(31 41 55) !important;
+}
+
+.dark .dark\:bg-gray-700 {
+  background-color: rgb(55 65 81) !important;
+}
+
+.dark .dark\:text-white {
+  color: rgb(255 255 255) !important;
+}
+
+.dark .dark\:text-gray-300 {
+  color: rgb(209 213 219) !important;
+}
+
+.dark .dark\:text-gray-100 {
+  color: rgb(243 244 246) !important;
+}
+
+.dark .dark\:border-gray-700 {
+  border-color: rgb(55 65 81) !important;
+}
+
+/* Base styles for dark mode */
+@layer base {
+  html {
+    transition: background-color 0.2s ease-in-out;
+    background-color: rgb(243 244 246);
+  }
+  
+  html.dark {
+    background-color: rgb(17 24 39);
+  }
+  
+  body {
+    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+    background-color: transparent;
+    color: rgb(17 24 39);
+  }
+  
+  body.dark {
+    color: rgb(243 244 246);
+  }
+} 
