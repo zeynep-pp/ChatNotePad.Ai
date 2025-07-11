@@ -260,7 +260,7 @@ export default function SmartNotePage() {
                 <div className="flex-1 relative">
                   <input
                     type="text"
-                    className="w-full rounded-xl border border-gray-300 dark:border-gray-600 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-white shadow-sm text-base"
+                    className="w-full rounded-xl border border-gray-300 dark:border-gray-600 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm text-base"
                     placeholder="✨ Tell me what to do with your text... (e.g., Remove all commas)"
                     value={command}
                     onChange={e => setCommand(e.target.value)}

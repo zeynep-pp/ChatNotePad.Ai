@@ -2,6 +2,14 @@
 
 /* Completely override system dark mode preference */
 @media (prefers-color-scheme: dark) {
+  .bg-white\/95 {
+    background-color: rgb(255 255 255) !important; /* Force white background */
+  }
+  
+  .dark\:bg-gray-900\/95 {
+    background-color: rgb(255 255 255) !important; /* Force light background */
+  }
+  
   .dark\:bg-gray-900\/80 {
     background-color: rgb(243 244 246) !important; /* Force light background */
   }
@@ -40,6 +48,14 @@
 }
 
 /* Apply dark styles only when .dark class is present */
+.dark .bg-white\/95 {
+  background-color: color-mix(in oklab, rgb(17 24 39) 95%, transparent) !important;
+}
+
+.dark .dark\:bg-gray-900\/95 {
+  background-color: color-mix(in oklab, rgb(17 24 39) 95%, transparent) !important;
+}
+
 .dark .dark\:bg-gray-900\/80 {
   background-color: color-mix(in oklab, rgb(17 24 39) 80%, transparent) !important;
 }
