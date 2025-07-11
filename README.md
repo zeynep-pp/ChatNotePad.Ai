@@ -32,31 +32,25 @@ The backend code for ChatNotePadAi can be found in the [Chat-Notepad-Core](https
 
 ## 🛠️ Troubleshooting
 
-### Tailwind CSS v4+ PostCSS Plugin Error
-If you see an error like:
+### Tailwind CSS v4+ Configuration
+This project uses Tailwind CSS v4 with the following configuration:
 
-```
-Error: It looks like you're trying to use `tailwindcss` directly as a PostCSS plugin. The PostCSS plugin has moved to a separate package, so to continue using Tailwind CSS with PostCSS you'll need to install `@tailwindcss/postcss` and update your PostCSS configuration.
+**PostCSS Configuration** (`postcss.config.js`):
+```js
+module.exports = {
+  plugins: {
+    '@tailwindcss/postcss': {},
+    autoprefixer: {},
+  },
+}
 ```
 
-**How to fix:**
-1. Install the new PostCSS plugin:
-   ```sh
-   npm install @tailwindcss/postcss --save-dev --legacy-peer-deps
-   ```
-2. Update your `postcss.config.js`:
-   ```js
-   module.exports = {
-     plugins: {
-       '@tailwindcss/postcss': {},
-       autoprefixer: {},
-     },
-   }
-   ```
-3. Restart your dev server:
-   ```sh
-   npm run dev
-   ```
+**Global CSS** (`app/globals.css`):
+```css
+@import "tailwindcss";
+```
+
+**Note:** In Tailwind CSS v4, use `@import "tailwindcss"` instead of the separate `@tailwind` directives.
 
 ### Dependency Conflicts (react-diff-viewer)
 If you see errors about peer dependency conflicts (especially with `react-diff-viewer`), always use the `--legacy-peer-deps` flag:
