@@ -45,14 +45,23 @@ export default function SmartNotePage() {
     "Capitalize first letter of each sentence",
     "Convert to uppercase",
     "Remove extra spaces",
-    "Add bullet points to each line"
+    "Add bullet points to each line",
+    "Summarize this text"
   ];
 
   const handleCommandSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await axios.post("http://localhost:8000/prompt", {
+      // Detect if this is a summarization request
+      const isSummarization = command.toLowerCase().includes('summarize') || 
+                            command.toLowerCase().includes('summary');
+      
+      const endpoint = isSummarization ? 
+        "http://localhost:8000/summarize" : 
+        "http://localhost:8000/prompt";
+      
+      const res = await axios.post(endpoint, {
         text: originalText,
         command,
       });
