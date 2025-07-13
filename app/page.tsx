@@ -7,6 +7,16 @@ import axios from "axios";
 
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
 
+type ErrorType = 'network' | 'server' | 'invalid_command' | 'empty_text' | 'unknown';
+
+interface ErrorState {
+  hasError: boolean;
+  type: ErrorType | null;
+  message: string;
+  details?: string;
+  retryable: boolean;
+}
+
 export default function SmartNotePage() {
   const [originalText, setOriginalText] = useState("");
   const [command, setCommand] = useState("");
@@ -15,6 +25,13 @@ export default function SmartNotePage() {
   const [copySuccess, setCopySuccess] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [error, setError] = useState<ErrorState>({
+    hasError: false,
+    type: null,
+    message: "",
+    retryable: false
+  });
+  const [retryCount, setRetryCount] = useState(0);
   
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
@@ -49,11 +66,70 @@ export default function SmartNotePage() {
     "Summarize this text"
   ];
 
+  const clearError = () => {
+    setError({
+      hasError: false,
+      type: null,
+      message: "",
+      retryable: false
+    });
+  };
+
+  const handleError = (errorType: ErrorType, message: string, details?: string, retryable: boolean = false) => {
+    setError({
+      hasError: true,
+      type: errorType,
+      message,
+      details,
+      retryable
+    });
+    setEditedText("");
+  };
+
+  const validateCommand = (cmd: string, text: string): { isValid: boolean; errorType?: ErrorType; message?: string } => {
+    if (!cmd.trim()) {
+      return {
+        isValid: false,
+        errorType: 'invalid_command',
+        message: 'Please enter a command to process your text.'
+      };
+    }
+    
+    if (!text.trim()) {
+      return {
+        isValid: false,
+        errorType: 'empty_text',
+        message: 'Please enter some text to process before giving a command.'
+      };
+    }
+    
+    if (cmd.length < 3) {
+      return {
+        isValid: false,
+        errorType: 'invalid_command',
+        message: 'Command too short. Please provide a more detailed instruction.'
+      };
+    }
+    
+    return { isValid: true };
+  };
+
   const handleCommandSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Clear previous errors
+    clearError();
+    
+    // Validate input
+    const validation = validateCommand(command, originalText);
+    if (!validation.isValid) {
+      handleError(validation.errorType!, validation.message!);
+      return;
+    }
+    
     setLoading(true);
+    
     try {
-      // Detect if this is a summarization request
       const isSummarization = command.toLowerCase().includes('summarize') || 
                             command.toLowerCase().includes('summary');
       
@@ -64,12 +140,45 @@ export default function SmartNotePage() {
       const res = await axios.post(endpoint, {
         text: originalText,
         command,
+      }, {
+        timeout: 30000 // 30 second timeout
       });
-      setEditedText(res.data.result || "");
-    } catch (err) {
-      setEditedText("Error processing command.");
+      
+      if (res.data.result) {
+        setEditedText(res.data.result);
+        setRetryCount(0); // Reset retry count on success
+      } else {
+        handleError('server', 'No result returned from the server. Please try a different command.', undefined, true);
+      }
+      
+    } catch (err: any) {
+      console.error('Command processing error:', err);
+      
+      if (err.code === 'ECONNABORTED' || err.message.includes('timeout')) {
+        handleError('network', 'Request timed out. The server might be busy.', 'Try again in a few moments or simplify your command.', true);
+      } else if (err.code === 'ECONNREFUSED' || err.message.includes('Network Error')) {
+        handleError('network', 'Unable to connect to the AI server.', 'Please check if the backend server is running on localhost:8000', true);
+      } else if (err.response?.status === 400) {
+        handleError('invalid_command', 'Invalid command or text format.', err.response.data?.error || 'Please try rephrasing your command.', false);
+      } else if (err.response?.status === 500) {
+        handleError('server', 'Server error occurred while processing your command.', err.response.data?.error || 'Please try again or use a simpler command.', true);
+      } else if (err.response?.status === 429) {
+        handleError('server', 'Too many requests. Please wait a moment.', 'The server is rate limiting requests.', true);
+      } else {
+        handleError('unknown', 'An unexpected error occurred.', err.message || 'Please try again or refresh the page.', true);
+      }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRetry = () => {
+    if (retryCount < 3) {
+      setRetryCount(prev => prev + 1);
+      clearError();
+      handleCommandSubmit({ preventDefault: () => {} } as React.FormEvent);
+    } else {
+      handleError('server', 'Maximum retry attempts reached.', 'Please check your connection and try again later.', false);
     }
   };
 
@@ -169,7 +278,75 @@ export default function SmartNotePage() {
               )}
             </div>
             
-            {editedText ? (
+            {error.hasError ? (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="max-w-md w-full bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6">
+                  <div className="flex items-start">
+                    <div className="flex-shrink-0">
+                      <svg className="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.664-.833-2.464 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                      </svg>
+                    </div>
+                    <div className="ml-3 w-full">
+                      <h3 className="text-sm font-medium text-red-800 dark:text-red-200 mb-1">
+                        {error.type === 'network' && 'Connection Error'}
+                        {error.type === 'server' && 'Server Error'}
+                        {error.type === 'invalid_command' && 'Invalid Command'}
+                        {error.type === 'empty_text' && 'Missing Text'}
+                        {error.type === 'unknown' && 'Unexpected Error'}
+                      </h3>
+                      <p className="text-sm text-red-700 dark:text-red-300 mb-3">
+                        {error.message}
+                      </p>
+                      {error.details && (
+                        <p className="text-xs text-red-600 dark:text-red-400 mb-3 bg-red-100 dark:bg-red-800/50 p-2 rounded">
+                          {error.details}
+                        </p>
+                      )}
+                      <div className="flex gap-2">
+                        {error.retryable && retryCount < 3 && (
+                          <button
+                            onClick={handleRetry}
+                            className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors duration-200 flex items-center gap-1"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            Retry {retryCount > 0 && `(${retryCount}/3)`}
+                          </button>
+                        )}
+                        <button
+                          onClick={clearError}
+                          className="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors duration-200"
+                        >
+                          Dismiss
+                        </button>
+                      </div>
+                      {error.type === 'network' && (
+                        <div className="mt-3 p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded text-xs">
+                          <div className="font-medium text-blue-800 dark:text-blue-200 mb-1">💡 Quick fixes:</div>
+                          <ul className="text-blue-700 dark:text-blue-300 space-y-1">
+                            <li>• Make sure the backend server is running</li>
+                            <li>• Check if localhost:8000 is accessible</li>
+                            <li>• Try refreshing the page</li>
+                          </ul>
+                        </div>
+                      )}
+                      {error.type === 'invalid_command' && (
+                        <div className="mt-3 p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded text-xs">
+                          <div className="font-medium text-yellow-800 dark:text-yellow-200 mb-1">💡 Try these instead:</div>
+                          <ul className="text-yellow-700 dark:text-yellow-300 space-y-1">
+                            <li>• "Make it more formal"</li>
+                            <li>• "Fix grammar and spelling"</li>
+                            <li>• "Convert to bullet points"</li>
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : editedText ? (
               <div className="flex flex-col gap-3 flex-1">
                 {/* Edited Text Area */}
                 <div className="bg-gray-50 dark:bg-gray-700 rounded p-3 border border-gray-200 dark:border-gray-600">
@@ -272,7 +449,12 @@ export default function SmartNotePage() {
                     className="w-full rounded-xl border border-gray-300 dark:border-gray-600 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm text-base"
                     placeholder="✨ Tell me what to do with your text... (e.g., Remove all commas)"
                     value={command}
-                    onChange={e => setCommand(e.target.value)}
+                    onChange={e => {
+                      setCommand(e.target.value);
+                      if (error.hasError && e.target.value.trim()) {
+                        clearError();
+                      }
+                    }}
                     disabled={loading}
                     onFocus={() => setShowSuggestions(true)}
                   />

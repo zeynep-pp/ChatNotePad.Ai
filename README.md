@@ -115,6 +115,71 @@ async def summarize_text(request: TextRequest):
 - **Red:** Removed text
 - **Copy button:** Copy the result to clipboard
 
+## 🛡️ Error Handling & Recovery
+
+The application now includes comprehensive error handling for a better user experience:
+
+### Automatic Error Detection
+- **Empty Command Validation:** Prevents submission of empty or too-short commands
+- **Missing Text Detection:** Alerts when trying to process without input text
+- **Network Error Handling:** Detects connection issues with the backend
+- **Server Error Classification:** Categorizes different types of server errors
+
+### Error Types & Messages
+1. **Connection Errors:**
+   - `"Unable to connect to the AI server"`
+   - Suggests checking if backend is running on localhost:8000
+
+2. **Invalid Commands:**
+   - `"Command too short. Please provide a more detailed instruction"`
+   - Provides example commands like "Make it more formal"
+
+3. **Server Errors:**
+   - `"Server error occurred while processing your command"`
+   - Offers retry options with automatic attempt tracking
+
+4. **Rate Limiting:**
+   - `"Too many requests. Please wait a moment"`
+   - Explains rate limiting and suggests waiting
+
+### Recovery Features
+- **Automatic Retry:** Up to 3 retry attempts for recoverable errors
+- **Smart Error Clearing:** Errors automatically clear when user starts typing
+- **Quick Fix Suggestions:** Context-specific solutions for each error type
+- **Graceful Degradation:** App remains functional even when backend is unavailable
+
+### Testing Error Scenarios
+To test the error handling system:
+
+1. **Invalid Command Test:**
+   ```
+   1. Leave the text editor empty
+   2. Try to submit a command
+   3. See "Missing Text" error with suggestions
+   ```
+
+2. **Connection Error Test:**
+   ```
+   1. Stop your backend server
+   2. Try to process text
+   3. See "Connection Error" with troubleshooting tips
+   ```
+
+3. **Short Command Test:**
+   ```
+   1. Enter text in the editor
+   2. Type a very short command like "hi"
+   3. See "Invalid Command" error with examples
+   ```
+
+4. **Recovery Test:**
+   ```
+   1. Trigger any error
+   2. Start typing a new command
+   3. Watch error automatically clear
+   4. Use retry button for network errors
+   ```
+
 ## 🔧 Configuration
 
 ### TailwindCSS v4+ Setup
@@ -461,7 +526,7 @@ MIT License. See [LICENSE](LICENSE) for details.
 ---
 
 ### 🟡 Phase 2: Smart Commands & User Feedback – **🛠 In Progress**
-- ⬜ Improved error handling for invalid/unsupported commands
+- ✅ Improved error handling for invalid/unsupported commands
 - ⬜ Command history display panel
 - ✅ **Command suggestions with click-to-apply actions**
 - ⬜ Animations and UX polish (auto-scroll, diff syncing)
