@@ -436,13 +436,6 @@ Contributions are welcome! Please follow these steps:
 
 MIT License. See [LICENSE](LICENSE) for details.
 
-## 🔮 Roadmap
-
-- [ ] Plugin system for custom commands
-- [ ] Real-time collaboration
-- [ ] File import/export
-- [ ] Advanced AI integrations
-- [ ] Multi-language support
 
 ## 🔮 Roadmap – Frontend (ChatNotePad.Ai)
 
@@ -470,14 +463,14 @@ MIT License. See [LICENSE](LICENSE) for details.
 ### 🟡 Phase 2: Smart Commands & User Feedback – **🛠 In Progress**
 - ⬜ Improved error handling for invalid/unsupported commands
 - ⬜ Command history display panel
-- ⬜ Command suggestions with click-to-apply actions
+- ✅ **Command suggestions with click-to-apply actions**
 - ⬜ Animations and UX polish (auto-scroll, diff syncing)
 - ⬜ Feedback display for agent response (e.g. "Processed by GPT")
 - ⬜ **Advanced LLM use cases:** Tone shift, simplification, formalization
-- ⬜ **Pre-built common commands** (suggestion panel)
+- ✅ **Pre-built common commands** (suggestion panel)
 - ⬜ **Context-aware suggestions**
-- ⬜ **Expandable suggestion panel**
-- ⬜ **Smart command examples:**  
+- ✅ **Expandable suggestion panel**
+- ✅ **Smart command examples:**  
   - "Remove all commas", "Replace 'and' with 'or'", "Capitalize first letter"
   - "Convert to uppercase", "Add bullet points", "Remove extra spaces"
   - "Summarize this text", "Make it more formal", etc.
@@ -490,22 +483,17 @@ MIT License. See [LICENSE](LICENSE) for details.
 - ⬜ Export note as Markdown or TXT
 - ⬜ Import notes from file (Markdown / TXT)
 - ⬜ Version history and undo functionality (client-side)
-- ⬜ Real-time collaboration UI support
-- ⬜ Localization and multi-language support (UI & command handling)
+- ⬜ **Real-time collaboration** UI support
+- ⬜ Localization and **multi-language support** (UI & command handling)
 - ⬜ **User-specific theme and settings**
-- ⬜ **Plugin-based command system**
+- ⬜ **Plugin system for custom commands**
 - ⬜ **Integration with cloud storage** (e.g., Dropbox, Google Drive)
+- ⬜ **File import/export**
+- ⬜ **Advanced AI integrations**
 
 ---
 
 ### 💡 Future Ideas
-_(Aşağıdaki maddeler Phase 3’e taşınabilir veya burada ayrı tutulabilir):_
 - ⬜ Plugin-based command system for power users
 - ⬜ User-specific theme and settings
 - ⬜ Integration with cloud storage (e.g., Dropbox, Google Drive)
-
----
-
-> 📝 **Not:**  
-> Her fazın detayları README’nin “Features” bölümüyle uyumludur.  
-> Bir özellik tamamlandığında ✅ ile işaretleyin, yeni eklemeler için uygun faza ekleyin.
