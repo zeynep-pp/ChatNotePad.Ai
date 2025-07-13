@@ -443,3 +443,69 @@ MIT License. See [LICENSE](LICENSE) for details.
 - [ ] File import/export
 - [ ] Advanced AI integrations
 - [ ] Multi-language support
+
+## 🔮 Roadmap – Frontend (ChatNotePad.Ai)
+
+### 🟢 Phase 1: Foundation & UI Features – **✅ Completed**
+- ✅ React 18 + Next.js 15 (App Router)
+- ✅ TailwindCSS v4 integration
+- ✅ Monaco Editor integration with Markdown support
+- ✅ Chat-style input area for natural language commands
+- ✅ Live diff viewer integration using `react-diff-viewer`
+- ✅ Dark/light theme toggle
+- ✅ Responsive design (desktop/mobile)
+- ✅ **Copy button** (copy result to clipboard)
+- ✅ **Side-by-side diff view** (diff visualization)
+- ✅ **Syntax highlighting in diffs**
+- ✅ **Word-level change detection** (diff)
+- ✅ **Monaco Editor features:**
+    - Line numbers, code folding
+    - Find & replace
+    - Keyboard shortcuts
+    - Responsive & markdown support
+- ✅ **Header:** App title and theme toggle
+
+---
+
+### 🟡 Phase 2: Smart Commands & User Feedback – **🛠 In Progress**
+- ⬜ Improved error handling for invalid/unsupported commands
+- ⬜ Command history display panel
+- ⬜ Command suggestions with click-to-apply actions
+- ⬜ Animations and UX polish (auto-scroll, diff syncing)
+- ⬜ Feedback display for agent response (e.g. "Processed by GPT")
+- ⬜ **Advanced LLM use cases:** Tone shift, simplification, formalization
+- ⬜ **Pre-built common commands** (suggestion panel)
+- ⬜ **Context-aware suggestions**
+- ⬜ **Expandable suggestion panel**
+- ⬜ **Smart command examples:**  
+  - "Remove all commas", "Replace 'and' with 'or'", "Capitalize first letter"
+  - "Convert to uppercase", "Add bullet points", "Remove extra spaces"
+  - "Summarize this text", "Make it more formal", etc.
+- ✅ **Text Editing & Summarization** (core functionality working)
+- ✅ **Natural Language Processing:** Transform text using plain English commands
+
+---
+
+### 🕣 Phase 3: Personalization & Export – **⬜ Not Started**
+- ⬜ Export note as Markdown or TXT
+- ⬜ Import notes from file (Markdown / TXT)
+- ⬜ Version history and undo functionality (client-side)
+- ⬜ Real-time collaboration UI support
+- ⬜ Localization and multi-language support (UI & command handling)
+- ⬜ **User-specific theme and settings**
+- ⬜ **Plugin-based command system**
+- ⬜ **Integration with cloud storage** (e.g., Dropbox, Google Drive)
+
+---
+
+### 💡 Future Ideas
+_(Aşağıdaki maddeler Phase 3’e taşınabilir veya burada ayrı tutulabilir):_
+- ⬜ Plugin-based command system for power users
+- ⬜ User-specific theme and settings
+- ⬜ Integration with cloud storage (e.g., Dropbox, Google Drive)
+
+---
+
+> 📝 **Not:**  
+> Her fazın detayları README’nin “Features” bölümüyle uyumludur.  
+> Bir özellik tamamlandığında ✅ ile işaretleyin, yeni eklemeler için uygun faza ekleyin.
