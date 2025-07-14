@@ -529,7 +529,7 @@ MIT License. See [LICENSE](LICENSE) for details.
 - ✅ Improved error handling for invalid/unsupported commands
 - ✅ Command history display panel
 - ✅ **Command suggestions with click-to-apply actions**
-- ⬜ Animations and UX polish (auto-scroll, diff syncing)
+- ✅ Animations and UX polish (auto-scroll, diff syncing)
 - ⬜ Feedback display for agent response (e.g. "Processed by GPT")
 - ⬜ **Advanced LLM use cases:** Tone shift, simplification, formalization
 - ✅ **Pre-built common commands** (suggestion panel)

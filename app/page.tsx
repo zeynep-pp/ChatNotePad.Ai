@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import DiffViewer from "react-diff-viewer";
 import axios from "axios";
@@ -44,6 +44,13 @@ export default function SmartNotePage() {
   const [retryCount, setRetryCount] = useState(0);
   const [commandHistory, setCommandHistory] = useState<CommandHistoryItem[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+  
+  // Refs for scroll targets
+  const historyRef = useRef<HTMLDivElement>(null);
+  const diffViewerRef = useRef<HTMLDivElement>(null);
+  const editorRef = useRef<HTMLDivElement>(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
+  const errorRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
@@ -95,12 +102,45 @@ export default function SmartNotePage() {
     const newHistory = [item, ...commandHistory].slice(0, 50); // Keep only last 50 items
     setCommandHistory(newHistory);
     saveHistoryToStorage(newHistory);
+    
+    // Auto-scroll to latest history item if panel is open
+    if (showHistory) {
+      setTimeout(() => {
+        scrollToLatestHistory();
+      }, 100);
+    }
   };
 
   const clearHistory = () => {
     setCommandHistory([]);
     localStorage.removeItem('commandHistory');
   };
+
+  // Auto-scroll functions
+  const scrollToLatestHistory = () => {
+    if (historyRef.current) {
+      historyRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const scrollToResults = () => {
+    if (resultsRef.current) {
+      resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  const scrollToError = () => {
+    if (errorRef.current) {
+      errorRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
+
+  // Enhanced loading state with progress
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  
+  // Diff syncing state
+  const [editorScrollTop, setEditorScrollTop] = useState(0);
+  const [diffScrollTop, setDiffScrollTop] = useState(0);
   
   const commandSuggestions = [
     "Remove all ',' characters",
@@ -130,6 +170,11 @@ export default function SmartNotePage() {
       retryable
     });
     setEditedText("");
+    
+    // Auto-scroll to error with slight delay
+    setTimeout(() => {
+      scrollToError();
+    }, 100);
   };
 
   const validateCommand = (cmd: string, text: string): { isValid: boolean; errorType?: ErrorType; message?: string } => {
@@ -174,6 +219,18 @@ export default function SmartNotePage() {
     }
     
     setLoading(true);
+    setLoadingProgress(0);
+    
+    // Simulate loading progress
+    const progressInterval = setInterval(() => {
+      setLoadingProgress(prev => {
+        if (prev >= 90) {
+          clearInterval(progressInterval);
+          return 90;
+        }
+        return prev + Math.random() * 20;
+      });
+    }, 200);
     
     // Create history item
     const historyItem: CommandHistoryItem = {
@@ -207,6 +264,11 @@ export default function SmartNotePage() {
         historyItem.success = true;
         historyItem.result = res.data.result;
         addToHistory(historyItem);
+        
+        // Auto-scroll to results after success
+        setTimeout(() => {
+          scrollToResults();
+        }, 300);
       } else {
         handleError('server', 'No result returned from the server. Please try a different command.', undefined, true);
         
@@ -237,6 +299,11 @@ export default function SmartNotePage() {
       }
     } finally {
       setLoading(false);
+      setLoadingProgress(100);
+      // Reset progress after animation
+      setTimeout(() => {
+        setLoadingProgress(0);
+      }, 500);
     }
   };
 
@@ -268,6 +335,27 @@ export default function SmartNotePage() {
     setShowSuggestions(false);
   };
 
+  // Diff syncing functions
+  const handleEditorScroll = (scrollTop: number) => {
+    setEditorScrollTop(scrollTop);
+    // Sync diff viewer scroll with a slight delay to avoid conflicts
+    if (diffViewerRef.current) {
+      setTimeout(() => {
+        diffViewerRef.current?.scrollTo({ top: scrollTop, behavior: 'smooth' });
+      }, 50);
+    }
+  };
+
+  const handleDiffScroll = (scrollTop: number) => {
+    setDiffScrollTop(scrollTop);
+    // Sync editor scroll with a slight delay to avoid conflicts
+    if (editorRef.current) {
+      setTimeout(() => {
+        editorRef.current?.scrollTo({ top: scrollTop, behavior: 'smooth' });
+      }, 50);
+    }
+  };
+
   const HistoryPanel = () => {
     const [filter, setFilter] = useState<'all' | 'success' | 'error'>('all');
     const [searchTerm, setSearchTerm] = useState('');
@@ -284,20 +372,20 @@ export default function SmartNotePage() {
     });
 
     return (
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm animate-in slide-in-from-bottom duration-300">
         <div className="px-4 py-3">
           <div className="flex justify-between items-center mb-3">
             <h3 className="text-sm font-medium text-gray-800 dark:text-gray-200">Command History</h3>
             <div className="flex gap-2">
               <button
                 onClick={clearHistory}
-                className="text-xs text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                className="text-xs text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-all duration-200 hover:scale-105"
               >
                 Clear All
               </button>
               <button
                 onClick={() => setShowHistory(false)}
-                className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100"
+                className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100 transition-all duration-200 hover:scale-105"
               >
                 Close
               </button>
@@ -325,16 +413,18 @@ export default function SmartNotePage() {
           </div>
           
           {/* History List */}
-          <div className="max-h-48 overflow-y-auto space-y-2">
+          <div ref={historyRef} className="max-h-48 overflow-y-auto space-y-2 scroll-smooth">
             {filteredHistory.length === 0 ? (
               <div className="text-xs text-gray-500 dark:text-gray-400 text-center py-4">
                 {commandHistory.length === 0 ? 'No commands yet' : 'No commands match your search'}
               </div>
             ) : (
-              filteredHistory.map((item) => (
+              filteredHistory.map((item, index) => (
                 <div
                   key={item.id}
-                  className="bg-gray-50 dark:bg-gray-700 rounded p-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer transition-colors"
+                  className={`bg-gray-50 dark:bg-gray-700 rounded p-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer transition-all duration-200 transform hover:scale-[1.02] ${
+                    index === 0 ? 'animate-pulse' : ''
+                  }`}
                   onClick={() => reuseCommand(item)}
                 >
                   <div className="flex justify-between items-start mb-1">
@@ -349,7 +439,7 @@ export default function SmartNotePage() {
                         e.stopPropagation();
                         reuseCommand(item);
                       }}
-                      className="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-300 dark:hover:text-blue-200"
+                      className="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-300 dark:hover:text-blue-200 transition-all duration-200 hover:scale-105"
                     >
                       Reuse
                     </button>
@@ -421,12 +511,18 @@ export default function SmartNotePage() {
                 </div>
               </div>
             </div>
-            <div className="flex-1 min-h-[300px]">
+            <div ref={editorRef} className="flex-1 min-h-[300px]">
               <MonacoEditor
                 height="300px"
                 defaultLanguage="markdown"
                 value={originalText}
                 onChange={v => setOriginalText(v || "")}
+                onMount={(editor, monaco) => {
+                  // Add scroll listener for diff syncing
+                  editor.onDidScrollChange((e: any) => {
+                    handleEditorScroll(e.scrollTop);
+                  });
+                }}
                 options={{
                   minimap: { enabled: false },
                   lineNumbers: "on",
@@ -457,8 +553,8 @@ export default function SmartNotePage() {
             </div>
             
             {error.hasError ? (
-              <div className="flex-1 flex items-center justify-center">
-                <div className="max-w-md w-full bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6">
+              <div ref={errorRef} className="flex-1 flex items-center justify-center">
+                <div className="max-w-md w-full bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 animate-in fade-in-50 slide-in-from-right duration-300">
                   <div className="flex items-start">
                     <div className="flex-shrink-0">
                       <svg className="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -525,9 +621,9 @@ export default function SmartNotePage() {
                 </div>
               </div>
             ) : editedText ? (
-              <div className="flex flex-col gap-3 flex-1">
+              <div ref={resultsRef} className="flex flex-col gap-3 flex-1 animate-in fade-in-50 slide-in-from-left duration-500">
                 {/* Edited Text Area */}
-                <div className="bg-gray-50 dark:bg-gray-700 rounded p-3 border border-gray-200 dark:border-gray-600">
+                <div className="bg-gray-50 dark:bg-gray-700 rounded p-3 border border-gray-200 dark:border-gray-600 transform transition-all duration-300 hover:shadow-md">
                   <div className="font-medium text-gray-700 dark:text-gray-300 mb-1 text-sm">Result:</div>
                   <div className="max-h-24 overflow-auto">
                     <pre className="whitespace-pre-wrap text-sm text-gray-800 dark:text-gray-200">{editedText}</pre>
@@ -535,30 +631,38 @@ export default function SmartNotePage() {
                 </div>
                 
                 {/* Diff Viewer */}
-                <div className="flex-1 min-h-[150px] overflow-auto">
+                <div ref={diffViewerRef} className="flex-1 min-h-[150px] overflow-auto scroll-smooth" onScroll={(e) => handleDiffScroll(e.currentTarget.scrollTop)}>
                   <div className="font-medium text-gray-700 dark:text-gray-300 mb-1 text-sm">Changes:</div>
-                  <DiffViewer
-                    oldValue={originalText}
-                    newValue={editedText}
-                    splitView={false}
-                    hideLineNumbers={true}
-                    showDiffOnly={true}
-                    useDarkTheme={isDarkMode}
-                    styles={{
-                      variables: {
-                        light: {
-                          diffViewerBackground: "#fff",
-                          addedBackground: "#e6ffed",
-                          removedBackground: "#ffeef0",
+                  <div className="transform transition-all duration-300 hover:shadow-sm">
+                    <DiffViewer
+                      oldValue={originalText}
+                      newValue={editedText}
+                      splitView={false}
+                      hideLineNumbers={true}
+                      showDiffOnly={true}
+                      useDarkTheme={isDarkMode}
+                      styles={{
+                        variables: {
+                          light: {
+                            diffViewerBackground: "#fff",
+                            addedBackground: "#e6ffed",
+                            removedBackground: "#ffeef0",
+                          },
+                          dark: {
+                            diffViewerBackground: "#1a202c",
+                            addedBackground: "#064420",
+                            removedBackground: "#420606",
+                          },
                         },
-                        dark: {
-                          diffViewerBackground: "#1a202c",
-                          addedBackground: "#064420",
-                          removedBackground: "#420606",
+                        line: {
+                          padding: '4px 8px',
+                          '&:hover': {
+                            backgroundColor: isDarkMode ? '#2d3748' : '#f7fafc',
+                          },
                         },
-                      },
-                    }}
-                  />
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
             ) : (
@@ -593,7 +697,15 @@ export default function SmartNotePage() {
         {/* Command Suggestions */}
         {showSuggestions && (
           <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-            <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Try these commands:</div>
+            <div className="flex justify-between items-center mb-2">
+              <div className="text-sm font-medium text-gray-700 dark:text-gray-300">Try these commands:</div>
+              <button
+                onClick={() => setShowSuggestions(false)}
+                className="text-xs text-gray-500 hover:text-gray-700 dark:text-white dark:hover:text-gray-200 transition-all duration-200 hover:scale-105"
+              >
+                Close
+              </button>
+            </div>
             <div className="flex flex-wrap gap-2">
               {commandSuggestions.map((suggestion, index) => (
                 <button
@@ -616,11 +728,22 @@ export default function SmartNotePage() {
           <div className="max-w-4xl mx-auto">
             <div className="flex items-center gap-3">
               {/* AI Icon */}
-              <div className="bg-blue-100 dark:bg-blue-900 p-2 rounded-full">
-                <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <button
+                onClick={() => {
+                  setShowSuggestions(!showSuggestions);
+                  setShowHistory(false);
+                }}
+                className={`p-2 rounded-full transition-all duration-200 cursor-pointer hover:scale-105 ${
+                  showSuggestions 
+                    ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' 
+                    : 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-800'
+                }`}
+                title="Toggle command suggestions"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                 </svg>
-              </div>
+              </button>
               
               {/* History Toggle Button */}
               <div className="relative">
@@ -668,7 +791,7 @@ export default function SmartNotePage() {
                   <button
                     type="button"
                     onClick={() => setShowSuggestions(!showSuggestions)}
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors z-20 cursor-pointer"
                   >
                     <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -676,27 +799,33 @@ export default function SmartNotePage() {
                   </button>
                 </div>
                 
-                <button
-                  type="submit"
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm flex items-center gap-2"
-                  disabled={loading || !command.trim()}
-                >
-                  {loading ? (
-                    <>
-                      <svg className="animate-spin w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                      </svg>
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                      </svg>
-                      Send
-                    </>
+                <div className="relative">
+                  <button
+                    type="submit"
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm flex items-center gap-2 transform hover:scale-105 active:scale-95"
+                    disabled={loading || !command.trim()}
+                  >
+                    {loading ? (
+                      <>
+                        <svg className="animate-spin w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                        </svg>
+                        Send
+                      </>
+                    )}
+                  </button>
+                  {/* Progress bar */}
+                  {loading && loadingProgress > 0 && (
+                    <div className="absolute bottom-0 left-0 h-1 bg-blue-300 rounded-full transition-all duration-300" style={{ width: `${loadingProgress}%` }}></div>
                   )}
-                </button>
+                </div>
               </form>
             </div>
             
