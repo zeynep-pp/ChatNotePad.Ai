@@ -527,7 +527,7 @@ MIT License. See [LICENSE](LICENSE) for details.
 
 ### 🟡 Phase 2: Smart Commands & User Feedback – **🛠 In Progress**
 - ✅ Improved error handling for invalid/unsupported commands
-- ⬜ Command history display panel
+- ✅ Command history display panel
 - ✅ **Command suggestions with click-to-apply actions**
 - ⬜ Animations and UX polish (auto-scroll, diff syncing)
 - ⬜ Feedback display for agent response (e.g. "Processed by GPT")

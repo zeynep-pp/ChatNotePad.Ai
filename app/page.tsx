@@ -17,6 +17,16 @@ interface ErrorState {
   retryable: boolean;
 }
 
+interface CommandHistoryItem {
+  id: string;
+  command: string;
+  timestamp: Date;
+  originalText: string;
+  result?: string;
+  success: boolean;
+  error?: string;
+}
+
 export default function SmartNotePage() {
   const [originalText, setOriginalText] = useState("");
   const [command, setCommand] = useState("");
@@ -32,6 +42,8 @@ export default function SmartNotePage() {
     retryable: false
   });
   const [retryCount, setRetryCount] = useState(0);
+  const [commandHistory, setCommandHistory] = useState<CommandHistoryItem[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
   
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
@@ -39,6 +51,21 @@ export default function SmartNotePage() {
       setIsDarkMode(savedTheme === 'dark');
     } else {
       setIsDarkMode(window.matchMedia('(prefers-color-scheme: dark)').matches);
+    }
+    
+    // Load command history from localStorage
+    const savedHistory = localStorage.getItem('commandHistory');
+    if (savedHistory) {
+      try {
+        const parsed = JSON.parse(savedHistory);
+        const historyWithDates = parsed.map((item: any) => ({
+          ...item,
+          timestamp: new Date(item.timestamp)
+        }));
+        setCommandHistory(historyWithDates);
+      } catch (error) {
+        console.error('Failed to parse command history:', error);
+      }
     }
   }, []);
 
@@ -54,6 +81,25 @@ export default function SmartNotePage() {
 
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode);
+  };
+
+  const saveHistoryToStorage = (history: CommandHistoryItem[]) => {
+    try {
+      localStorage.setItem('commandHistory', JSON.stringify(history));
+    } catch (error) {
+      console.error('Failed to save command history:', error);
+    }
+  };
+
+  const addToHistory = (item: CommandHistoryItem) => {
+    const newHistory = [item, ...commandHistory].slice(0, 50); // Keep only last 50 items
+    setCommandHistory(newHistory);
+    saveHistoryToStorage(newHistory);
+  };
+
+  const clearHistory = () => {
+    setCommandHistory([]);
+    localStorage.removeItem('commandHistory');
   };
   
   const commandSuggestions = [
@@ -129,6 +175,15 @@ export default function SmartNotePage() {
     
     setLoading(true);
     
+    // Create history item
+    const historyItem: CommandHistoryItem = {
+      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+      command: command.trim(),
+      timestamp: new Date(),
+      originalText: originalText,
+      success: false
+    };
+    
     try {
       const isSummarization = command.toLowerCase().includes('summarize') || 
                             command.toLowerCase().includes('summary');
@@ -147,12 +202,25 @@ export default function SmartNotePage() {
       if (res.data.result) {
         setEditedText(res.data.result);
         setRetryCount(0); // Reset retry count on success
+        
+        // Update history item with success
+        historyItem.success = true;
+        historyItem.result = res.data.result;
+        addToHistory(historyItem);
       } else {
         handleError('server', 'No result returned from the server. Please try a different command.', undefined, true);
+        
+        // Update history item with error
+        historyItem.error = 'No result returned from the server';
+        addToHistory(historyItem);
       }
       
     } catch (err: any) {
       console.error('Command processing error:', err);
+      
+      // Update history item with error
+      historyItem.error = err.message || 'Unknown error occurred';
+      addToHistory(historyItem);
       
       if (err.code === 'ECONNABORTED' || err.message.includes('timeout')) {
         handleError('network', 'Request timed out. The server might be busy.', 'Try again in a few moments or simplify your command.', true);
@@ -191,6 +259,116 @@ export default function SmartNotePage() {
       setCopySuccess("Failed to copy");
       setTimeout(() => setCopySuccess(""), 2000);
     }
+  };
+
+  const reuseCommand = (historyItem: CommandHistoryItem) => {
+    setCommand(historyItem.command);
+    setOriginalText(historyItem.originalText);
+    setShowHistory(false);
+    setShowSuggestions(false);
+  };
+
+  const HistoryPanel = () => {
+    const [filter, setFilter] = useState<'all' | 'success' | 'error'>('all');
+    const [searchTerm, setSearchTerm] = useState('');
+
+    const filteredHistory = commandHistory.filter(item => {
+      const matchesFilter = filter === 'all' || 
+        (filter === 'success' && item.success) || 
+        (filter === 'error' && !item.success);
+      
+      const matchesSearch = searchTerm === '' || 
+        item.command.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      return matchesFilter && matchesSearch;
+    });
+
+    return (
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
+        <div className="px-4 py-3">
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="text-sm font-medium text-gray-800 dark:text-gray-200">Command History</h3>
+            <div className="flex gap-2">
+              <button
+                onClick={clearHistory}
+                className="text-xs text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+              >
+                Clear All
+              </button>
+              <button
+                onClick={() => setShowHistory(false)}
+                className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+          
+          {/* Search and Filter */}
+          <div className="flex gap-2 mb-3">
+            <input
+              type="text"
+              placeholder="Search commands..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="flex-1 text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            />
+            <select
+              value={filter}
+              onChange={(e) => setFilter(e.target.value as 'all' | 'success' | 'error')}
+              className="text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            >
+              <option value="all">All</option>
+              <option value="success">Success</option>
+              <option value="error">Error</option>
+            </select>
+          </div>
+          
+          {/* History List */}
+          <div className="max-h-48 overflow-y-auto space-y-2">
+            {filteredHistory.length === 0 ? (
+              <div className="text-xs text-gray-500 dark:text-gray-400 text-center py-4">
+                {commandHistory.length === 0 ? 'No commands yet' : 'No commands match your search'}
+              </div>
+            ) : (
+              filteredHistory.map((item) => (
+                <div
+                  key={item.id}
+                  className="bg-gray-50 dark:bg-gray-700 rounded p-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer transition-colors"
+                  onClick={() => reuseCommand(item)}
+                >
+                  <div className="flex justify-between items-start mb-1">
+                    <div className="flex items-center gap-2">
+                      <span className={`w-2 h-2 rounded-full ${item.success ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                      <span className="text-xs text-gray-600 dark:text-gray-300">
+                        {item.timestamp.toLocaleTimeString()}
+                      </span>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        reuseCommand(item);
+                      }}
+                      className="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-300 dark:hover:text-blue-200"
+                    >
+                      Reuse
+                    </button>
+                  </div>
+                  <div className="text-xs text-gray-800 dark:text-gray-100 mb-1 font-medium">
+                    {item.command}
+                  </div>
+                  {item.error && (
+                    <div className="text-xs text-red-600 dark:text-red-400 truncate">
+                      Error: {item.error}
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -409,6 +587,9 @@ export default function SmartNotePage() {
       </main>
       {/* Enhanced Chat Interface */}
       <div className="fixed bottom-0 left-0 w-full bg-white/95 dark:bg-gray-900/95 border-t border-gray-200 dark:border-gray-700 z-10 shadow-lg" style={{backdropFilter: 'blur(8px)'}}>
+        {/* Command History Panel */}
+        {showHistory && <HistoryPanel />}
+        
         {/* Command Suggestions */}
         {showSuggestions && (
           <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
@@ -439,6 +620,31 @@ export default function SmartNotePage() {
                 <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                 </svg>
+              </div>
+              
+              {/* History Toggle Button */}
+              <div className="relative">
+                <button
+                  onClick={() => {
+                    setShowHistory(!showHistory);
+                    setShowSuggestions(false);
+                  }}
+                  className={`p-2 rounded-full transition-colors ${
+                    showHistory 
+                      ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' 
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                  title="Toggle command history"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </button>
+                {commandHistory.length > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    {commandHistory.length > 99 ? '99+' : commandHistory.length}
+                  </span>
+                )}
               </div>
               
               {/* Input Form */}
