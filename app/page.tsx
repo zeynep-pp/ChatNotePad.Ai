@@ -193,14 +193,17 @@ export default function SmartNotePage() {
     return { isValid: true };
   };
 
-  const handleCommandSubmit = async (e: React.FormEvent) => {
+  const handleCommandSubmit = async (e: React.FormEvent, quickCommand?: string) => {
     e.preventDefault();
     
     // Clear previous errors
     clearError();
     
+    // Use provided command or fall back to state
+    const currentCommand = quickCommand || command;
+    
     // Validate input
-    const validation = validateCommand(command, originalText);
+    const validation = validateCommand(currentCommand, originalText);
     if (!validation.isValid) {
       handleError(validation.errorType!, validation.message!);
       return;
@@ -223,32 +226,32 @@ export default function SmartNotePage() {
     // Create history item
     const historyItem: CommandHistoryItem = {
       id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-      command: command.trim(),
+      command: currentCommand.trim(),
       timestamp: new Date(),
       originalText: originalText,
       success: false
     };
     
     try {
-      const isSummarization = command.toLowerCase().includes('summarize') || 
-                            command.toLowerCase().includes('summary');
+      const isSummarization = currentCommand.toLowerCase().includes('summarize') || 
+                            currentCommand.toLowerCase().includes('summary');
       
-      const isTransformation = command.toLowerCase().includes('formal') || 
-                              command.toLowerCase().includes('formalize') ||
-                              command.toLowerCase().includes('professional') ||
-                              command.toLowerCase().includes('business') ||
-                              command.toLowerCase().includes('official') ||
-                              command.toLowerCase().includes('simplify') ||
-                              command.toLowerCase().includes('simple') ||
-                              command.toLowerCase().includes('easier') ||
-                              command.toLowerCase().includes('beginner') ||
-                              command.toLowerCase().includes('layman') ||
-                              command.toLowerCase().includes('tone') ||
-                              command.toLowerCase().includes('casual') ||
-                              command.toLowerCase().includes('friendly') ||
-                              command.toLowerCase().includes('warm') ||
-                              command.toLowerCase().includes('conversational') ||
-                              command.toLowerCase().includes('confident');
+      const isTransformation = currentCommand.toLowerCase().includes('formal') || 
+                              currentCommand.toLowerCase().includes('formalize') ||
+                              currentCommand.toLowerCase().includes('professional') ||
+                              currentCommand.toLowerCase().includes('business') ||
+                              currentCommand.toLowerCase().includes('official') ||
+                              currentCommand.toLowerCase().includes('simplify') ||
+                              currentCommand.toLowerCase().includes('simple') ||
+                              currentCommand.toLowerCase().includes('easier') ||
+                              currentCommand.toLowerCase().includes('beginner') ||
+                              currentCommand.toLowerCase().includes('layman') ||
+                              currentCommand.toLowerCase().includes('tone') ||
+                              currentCommand.toLowerCase().includes('casual') ||
+                              currentCommand.toLowerCase().includes('friendly') ||
+                              currentCommand.toLowerCase().includes('warm') ||
+                              currentCommand.toLowerCase().includes('conversational') ||
+                              currentCommand.toLowerCase().includes('confident');
       
       const endpoint = isSummarization ? 
         "http://localhost:8000/summarize" : 
@@ -258,7 +261,7 @@ export default function SmartNotePage() {
       
       const res = await axios.post(endpoint, {
         text: originalText,
-        command,
+        command: currentCommand,
       }, {
         timeout: 30000 // 30 second timeout
       });
@@ -361,10 +364,8 @@ export default function SmartNotePage() {
     setCommand(transformCommand);
     setShowSuggestions(false);
     setShowHistory(false);
-    // Auto-submit the transformation
-    setTimeout(() => {
-      handleCommandSubmit({ preventDefault: () => {} } as React.FormEvent);
-    }, 100);
+    // Auto-submit the transformation with the command parameter
+    handleCommandSubmit({ preventDefault: () => {} } as React.FormEvent, transformCommand);
   };
 
   // Diff syncing functions
