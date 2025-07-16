@@ -579,7 +579,7 @@ MIT License. See [LICENSE](LICENSE) for details.
 
 ---
 
-### 🟡 Phase 2: Smart Commands & User Feedback – **🛠 In Progress**
+### 🟡 Phase 2: Smart Commands & User Feedback – **✅ Completed**
 - ✅ Improved error handling for invalid/unsupported commands
 - ✅ Command history display panel
 - ✅ **Command suggestions with click-to-apply actions**
@@ -587,7 +587,6 @@ MIT License. See [LICENSE](LICENSE) for details.
 - ✅ Feedback display for agent response (e.g. "Processed by GPT")
 - ✅ **Advanced LLM use cases:** Tone shift, simplification, formalization
 - ✅ **Pre-built common commands** (suggestion panel)
-- ⬜ **Context-aware suggestions**
 - ✅ **Expandable suggestion panel**
 - ✅ **Smart command examples:**  
   - "Remove all commas", "Replace 'and' with 'or'", "Capitalize first letter"
@@ -609,6 +608,7 @@ MIT License. See [LICENSE](LICENSE) for details.
 - ⬜ **Integration with cloud storage** (e.g., Dropbox, Google Drive)
 - ⬜ **File import/export**
 - ⬜ **Advanced AI integrations**
+- ⬜ **Context-aware suggestions**
 
 ---
 
