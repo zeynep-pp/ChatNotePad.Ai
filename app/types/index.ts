@@ -14,6 +14,7 @@ export interface AgentInfo {
   tokens_used?: number;
   confidence_score?: number;
   timestamp: string;
+  transformation_type?: 'formalization' | 'simplification' | 'tone_shift' | 'general';
 }
 
 export interface CommandHistoryItem {

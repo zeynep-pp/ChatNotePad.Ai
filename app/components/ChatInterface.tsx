@@ -19,6 +19,7 @@ interface ChatInterfaceProps {
   onClearError: () => void;
   hasError: boolean;
   commandSuggestions: string[];
+  onQuickTransform: (command: string) => void;
 }
 
 export default function ChatInterface({
@@ -36,7 +37,8 @@ export default function ChatInterface({
   onSubmit,
   onClearError,
   hasError,
-  commandSuggestions
+  commandSuggestions,
+  onQuickTransform
 }: ChatInterfaceProps) {
   return (
     <div className="fixed bottom-0 left-0 w-full bg-white/95 dark:bg-gray-900/95 border-t border-gray-200 dark:border-gray-700 z-10 shadow-lg" style={{backdropFilter: 'blur(8px)'}}>
@@ -53,6 +55,40 @@ export default function ChatInterface({
       {/* Command Suggestions */}
       {showSuggestions && (
         <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+          {/* Quick Transform Actions */}
+          <div className="mb-4">
+            <div className="flex justify-between items-center mb-2">
+              <div className="text-sm font-medium text-gray-700 dark:text-gray-300">Quick Transform:</div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => onQuickTransform("Make this more formal")}
+                className="bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-3 py-1 rounded-full text-sm hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors flex items-center gap-1"
+              >
+                📋 Make Formal
+              </button>
+              <button
+                onClick={() => onQuickTransform("Simplify this text for beginners")}
+                className="bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-3 py-1 rounded-full text-sm hover:bg-green-200 dark:hover:bg-green-800 transition-colors flex items-center gap-1"
+              >
+                📖 Simplify
+              </button>
+              <button
+                onClick={() => onQuickTransform("Make this more casual")}
+                className="bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300 px-3 py-1 rounded-full text-sm hover:bg-yellow-200 dark:hover:bg-yellow-800 transition-colors flex items-center gap-1"
+              >
+                😊 Make Casual
+              </button>
+              <button
+                onClick={() => onQuickTransform("Add professional tone")}
+                className="bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 px-3 py-1 rounded-full text-sm hover:bg-purple-200 dark:hover:bg-purple-800 transition-colors flex items-center gap-1"
+              >
+                💼 Professional
+              </button>
+            </div>
+          </div>
+          
+          {/* Regular Command Suggestions */}
           <div className="flex justify-between items-center mb-2">
             <div className="text-sm font-medium text-gray-700 dark:text-gray-300">Try these commands:</div>
             <button

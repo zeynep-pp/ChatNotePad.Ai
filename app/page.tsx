@@ -49,7 +49,12 @@ export default function SmartNotePage() {
     "Convert to uppercase",
     "Remove extra spaces",
     "Add bullet points to each line",
-    "Summarize this text"
+    "Summarize this text",
+    "Make this more formal",
+    "Simplify this text for beginners",
+    "Make this more casual",
+    "Add professional tone",
+    "Make this sound more confident"
   ];
 
   useEffect(() => {
@@ -228,8 +233,27 @@ export default function SmartNotePage() {
       const isSummarization = command.toLowerCase().includes('summarize') || 
                             command.toLowerCase().includes('summary');
       
+      const isTransformation = command.toLowerCase().includes('formal') || 
+                              command.toLowerCase().includes('formalize') ||
+                              command.toLowerCase().includes('professional') ||
+                              command.toLowerCase().includes('business') ||
+                              command.toLowerCase().includes('official') ||
+                              command.toLowerCase().includes('simplify') ||
+                              command.toLowerCase().includes('simple') ||
+                              command.toLowerCase().includes('easier') ||
+                              command.toLowerCase().includes('beginner') ||
+                              command.toLowerCase().includes('layman') ||
+                              command.toLowerCase().includes('tone') ||
+                              command.toLowerCase().includes('casual') ||
+                              command.toLowerCase().includes('friendly') ||
+                              command.toLowerCase().includes('warm') ||
+                              command.toLowerCase().includes('conversational') ||
+                              command.toLowerCase().includes('confident');
+      
       const endpoint = isSummarization ? 
         "http://localhost:8000/summarize" : 
+        isTransformation ?
+        "http://localhost:8000/api/v1/transform" :
         "http://localhost:8000/prompt";
       
       const res = await axios.post(endpoint, {
@@ -250,7 +274,9 @@ export default function SmartNotePage() {
         } else {
           // Fallback for older backend versions
           setCurrentAgentInfo({
-            model: isSummarization ? 'Summarization Agent' : 'Processing Agent',
+            model: isSummarization ? 'Summarization Agent' : 
+                   isTransformation ? 'Text Transformation Agent' : 
+                   'Processing Agent',
             processing_time_ms: Date.now() - parseInt(historyItem.id.split('Math')[0]),
             timestamp: new Date().toISOString()
           });
@@ -329,6 +355,16 @@ export default function SmartNotePage() {
     setOriginalText(historyItem.originalText);
     setShowHistory(false);
     setShowSuggestions(false);
+  };
+
+  const handleQuickTransform = (transformCommand: string) => {
+    setCommand(transformCommand);
+    setShowSuggestions(false);
+    setShowHistory(false);
+    // Auto-submit the transformation
+    setTimeout(() => {
+      handleCommandSubmit({ preventDefault: () => {} } as React.FormEvent);
+    }, 100);
   };
 
   // Diff syncing functions
@@ -429,6 +465,7 @@ export default function SmartNotePage() {
         onClearError={clearError}
         hasError={error.hasError}
         commandSuggestions={commandSuggestions}
+        onQuickTransform={handleQuickTransform}
       />
     </div>
   );

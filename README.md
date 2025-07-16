@@ -7,6 +7,7 @@ ChatNotePad.Ai is a modern, AI-powered note-taking application that allows users
 The backend for ChatNotePad.Ai should be a FastAPI application that provides the following endpoints:
 - `/prompt` - For text editing and transformation
 - `/summarize` - For text summarization
+- `/api/v1/transform` - For advanced LLM transformations (formalization, simplification, tone shift)
 
 For a complete backend implementation example, see the [Chat-Notepad-Core](https://github.com/zeynep-pp/Chat-Notepad-Core) repository.
 
@@ -24,6 +25,7 @@ For a complete backend implementation example, see the [Chat-Notepad-Core](https
 - **Text Editing:** "Remove all commas", "Replace 'and' with 'or'", "Capitalize first letter"
 - **Formatting:** "Convert to uppercase", "Add bullet points", "Remove extra spaces"
 - **AI Features:** "Summarize this text", "Make it more formal"
+- **Advanced LLM Transformations:** "Simplify this text for beginners", "Add professional tone", "Make this more casual"
 
 ## 🖥️ UI Layout
 
@@ -90,6 +92,22 @@ async def process_text(request: TextRequest):
 async def summarize_text(request: TextRequest):
     # Handle summarization requests
     return {"result": summary}
+
+@app.post("/api/v1/transform")
+async def transform_text(request: TransformRequest):
+    # Handle advanced text transformations
+    return {
+        "result": transformed_text,
+        "success": True,
+        "agent_used": "transformer",
+        "agent_info": {
+            "model": "text-transformation-agent",
+            "processing_time_ms": 1250,
+            "tokens_used": 450,
+            "confidence_score": 0.95,
+            "transformation_type": "formalization"
+        }
+    }
 ```
 
 ## 📝 Usage Examples
@@ -108,6 +126,42 @@ async def summarize_text(request: TextRequest):
    - `"Summarize this text"`
    - `"Give me a brief summary"`
    - `"Create a concise summary"`
+
+### Advanced LLM Transformations 🆕
+The application now includes powerful text transformation capabilities powered by the TransformerAgent:
+
+#### Quick Transform Actions
+- **📋 Make Formal:** Converts casual text to professional, business-appropriate language
+- **📖 Simplify:** Transforms complex text into simple, beginner-friendly language
+- **😊 Make Casual:** Converts formal text to friendly, conversational tone
+- **💼 Professional:** Adds professional tone while maintaining clarity
+
+#### Transformation Commands
+1. **Formalization:**
+   - `"Make this more formal"`
+   - `"Convert to professional language"`
+   - `"Add business tone"`
+   - `"Make this official"`
+
+2. **Simplification:**
+   - `"Simplify this text for beginners"`
+   - `"Make this easier to understand"`
+   - `"Convert to layman terms"`
+   - `"Simplify the language"`
+
+3. **Tone Shifting:**
+   - `"Make this more casual"`
+   - `"Add friendly tone"`
+   - `"Make this conversational"`
+   - `"Make this sound more confident"`
+
+#### Visual Feedback
+- **Transformation Type Badges:** Color-coded badges showing the type of transformation performed
+- **Confidence Indicators:** Visual confidence scores with color coding:
+  - 🟢 Green: ≥90% confidence (High quality)
+  - 🟡 Yellow: 70-89% confidence (Good quality)
+  - 🔴 Red: <70% confidence (Review recommended)
+- **Agent Information:** Displays processing time, tokens used, and transformation metadata
 
 ### Live Diff Viewing
 - Changes are highlighted in real-time
@@ -530,8 +584,8 @@ MIT License. See [LICENSE](LICENSE) for details.
 - ✅ Command history display panel
 - ✅ **Command suggestions with click-to-apply actions**
 - ✅ Animations and UX polish (auto-scroll, diff syncing)
-- ⬜ Feedback display for agent response (e.g. "Processed by GPT")
-- ⬜ **Advanced LLM use cases:** Tone shift, simplification, formalization
+- ✅ Feedback display for agent response (e.g. "Processed by GPT")
+- ✅ **Advanced LLM use cases:** Tone shift, simplification, formalization
 - ✅ **Pre-built common commands** (suggestion panel)
 - ⬜ **Context-aware suggestions**
 - ✅ **Expandable suggestion panel**
