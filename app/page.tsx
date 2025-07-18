@@ -1,13 +1,16 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import axios from "axios";
 import { ErrorState, CommandHistoryItem, AgentInfo } from './types';
 import TextEditor from './components/TextEditor';
 import ResultsPanel from './components/ResultsPanel';
 import ChatInterface from './components/ChatInterface';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import { UserProfileDropdown } from './components/auth/UserProfileDropdown';
+import { AuthAPI } from './lib/auth';
 
-export default function SmartNotePage() {
+function SmartNotePageContent() {
   const [originalText, setOriginalText] = useState("");
   const [command, setCommand] = useState("");
   const [editedText, setEditedText] = useState("");
@@ -225,7 +228,7 @@ export default function SmartNotePage() {
     
     // Create history item
     const historyItem: CommandHistoryItem = {
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+      id: Date.now().toString() + Math.random().toString(36).substring(2, 11),
       command: currentCommand.trim(),
       timestamp: new Date(),
       originalText: originalText,
@@ -263,7 +266,10 @@ export default function SmartNotePage() {
         text: originalText,
         command: currentCommand,
       }, {
-        timeout: 30000 // 30 second timeout
+        timeout: 30000, // 30 second timeout
+        headers: {
+          ...AuthAPI.isAuthenticated() ? { Authorization: `Bearer ${AuthAPI.getToken()}` } : {}
+        }
       });
       
       if (res.data.result) {
@@ -390,13 +396,14 @@ export default function SmartNotePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-300 dark:from-gray-900 dark:to-gray-800 flex flex-col">
-      {/* Header */}
-      <header className="w-full py-6 px-4 flex flex-col items-center bg-white/80 dark:bg-gray-900/80 shadow-md">
+    <ProtectedRoute>
+      <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-300 dark:from-gray-900 dark:to-gray-800 flex flex-col">
+        {/* Header */}
+        <header className="w-full py-6 px-4 flex flex-col items-center bg-white/80 dark:bg-gray-900/80 shadow-md">
         <div className="w-full max-w-4xl flex justify-between items-center mb-4">
           <div className="flex-1"></div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">ChatNotePadAi</h1>
-          <div className="flex-1 flex justify-end">
+          <div className="flex-1 flex justify-end space-x-3">
             <button
               onClick={toggleTheme}
               className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-200"
@@ -412,12 +419,14 @@ export default function SmartNotePage() {
                 </svg>
               )}
             </button>
+            <UserProfileDropdown />
           </div>
         </div>
         <p className="text-gray-600 dark:text-gray-300 text-center max-w-xl text-sm">
           AI-powered note editing and transformation. Write your note, enter a natural language command, and see the changes instantly with live diff!
         </p>
       </header>
+      
 
       {/* Main Content */}
       <main className="flex-1 w-full px-4 py-4">
@@ -468,6 +477,22 @@ export default function SmartNotePage() {
         commandSuggestions={commandSuggestions}
         onQuickTransform={handleQuickTransform}
       />
-    </div>
+      </div>
+    </ProtectedRoute>
+  );
+}
+
+export default function SmartNotePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-300 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+        </div>
+      </div>
+    }>
+      <SmartNotePageContent />
+    </Suspense>
   );
 }

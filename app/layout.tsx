@@ -1,4 +1,7 @@
 import "./globals.css";
+import { AuthProvider } from './contexts/AuthContext';
+import { PasswordResetRedirect } from './components/auth/PasswordResetRedirect';
+import { EmailConfirmationRedirect } from './components/auth/EmailConfirmationRedirect';
 
 export const metadata = {
   title: "ChatNotePadAi",
@@ -12,7 +15,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <AuthProvider>
+          <PasswordResetRedirect />
+          <EmailConfirmationRedirect />
+          {children}
+        </AuthProvider>
+      </body>
     </html>
   );
 }

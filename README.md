@@ -9,6 +9,18 @@ The backend for ChatNotePad.Ai should be a FastAPI application that provides the
 - `/summarize` - For text summarization
 - `/api/v1/transform` - For advanced LLM transformations (formalization, simplification, tone shift)
 
+### Authentication Endpoints
+- `POST /auth/signup` - User registration with email verification
+- `POST /auth/signin` - User login
+- `POST /auth/confirm-email` - Email confirmation handling
+- `POST /auth/reset-password` - Password reset request
+- `POST /auth/update-password` - Password update with token
+- `POST /auth/resend-verification` - Resend email verification
+- `GET /auth/me` - Get current user profile
+- `DELETE /auth/me` - Delete user account
+- `GET /auth/preferences` - Get user preferences
+- `PUT /auth/preferences` - Update user preferences
+
 For a complete backend implementation example, see the [Chat-Notepad-Core](https://github.com/zeynep-pp/Chat-Notepad-Core) repository.
 
 ## ✨ Features
@@ -20,6 +32,9 @@ For a complete backend implementation example, see the [Chat-Notepad-Core](https
 - **Text Summarization:** AI-powered text summarization feature
 - **Theme Support:** Beautiful light and dark mode with smooth transitions
 - **Responsive Design:** Works seamlessly on desktop and mobile devices
+- **User Authentication:** Complete Supabase-based authentication with email verification
+- **User Profiles:** User management with preferences and settings
+- **Protected Routes:** Secure access to application features
 
 ### Smart Commands
 - **Text Editing:** "Remove all commas", "Replace 'and' with 'or'", "Capitalize first letter"
@@ -43,6 +58,9 @@ For a complete backend implementation example, see the [Chat-Notepad-Core](https
 - **Monaco Editor** (`@monaco-editor/react`)
 - **react-diff-viewer** (diff visualization)
 - **axios** (API communication)
+- **Supabase** (authentication and user management)
+- **react-hook-form** (form validation)
+- **yup** (schema validation)
 
 ### Backend Requirements
 Your FastAPI backend should include:
@@ -50,6 +68,9 @@ Your FastAPI backend should include:
 - **Multi-agent architecture** (text editor + summarizer agents)
 - **AI/LLM integration** (OpenAI, Anthropic, etc.)
 - **Async request handling**
+- **Supabase integration** (authentication, user management)
+- **JWT token validation**
+- **Email confirmation handling**
 
 ## 🚀 Getting Started
 
@@ -283,21 +304,77 @@ app.add_middleware(
 )
 ```
 
+## 🔐 Authentication System
+
+### Supabase Integration
+The application uses Supabase for authentication with the following features:
+
+- **Email/Password Authentication:** Secure user registration and login
+- **Email Verification:** Required email confirmation for new accounts
+- **Password Reset:** Email-based password reset functionality
+- **Protected Routes:** Automatic redirection for unauthenticated users
+- **User Profiles:** Complete user management with preferences
+- **Session Management:** Automatic token refresh and logout
+
+### Authentication Flow
+1. **Sign Up:** User registers with email/password
+2. **Email Verification:** Confirmation email sent via Supabase
+3. **Email Confirmation:** User clicks link to verify email
+4. **Sign In:** User can now log in with verified credentials
+5. **Protected Access:** Access to main application features
+
+### Authentication Components
+Located in `/app/components/auth/`:
+- `LoginForm.tsx` - User login interface
+- `SignUpForm.tsx` - User registration with validation
+- `PasswordResetForm.tsx` - Password reset request
+- `PasswordUpdateForm.tsx` - Password update with token
+- `EmailVerificationModal.tsx` - Email verification prompts
+- `ProtectedRoute.tsx` - Route protection wrapper
+- `UserProfileDropdown.tsx` - User profile and settings
+
+### Authentication Context
+The `AuthContext` provides:
+- User state management
+- Authentication methods (signUp, signIn, signOut)
+- Error handling and user feedback
+- Automatic session management
+
 ## 📦 Project Structure
 
 ```
 ChatNotePad.Ai/
 ├── app/
-│   ├── layout.tsx           # Root layout with metadata
-│   ├── page.tsx             # Main application component
-│   └── globals.css          # Global styles and TailwindCSS
+│   ├── auth/                     # Authentication pages
+│   │   ├── page.tsx             # Login/signup page
+│   │   ├── confirm-email/       # Email confirmation
+│   │   └── reset-password/      # Password reset
+│   ├── components/
+│   │   ├── auth/                # Authentication components
+│   │   │   ├── LoginForm.tsx
+│   │   │   ├── SignUpForm.tsx
+│   │   │   ├── ProtectedRoute.tsx
+│   │   │   └── ...
+│   │   ├── TextEditor.tsx       # Monaco editor
+│   │   ├── ResultsPanel.tsx     # Results display
+│   │   └── ...
+│   ├── contexts/
+│   │   └── AuthContext.tsx      # Authentication context
+│   ├── lib/
+│   │   ├── auth.ts              # Authentication API
+│   │   └── authInterceptor.ts   # Axios interceptors
+│   ├── types/
+│   │   └── auth.ts              # Authentication types
+│   ├── settings/                # User settings page
+│   ├── layout.tsx               # Root layout
+│   ├── page.tsx                 # Main application
+│   └── globals.css              # Global styles
 ├── public/
-│   └── index.html           # Landing page
-├── package.json             # Dependencies and scripts
-├── tailwind.config.js       # TailwindCSS configuration
-├── postcss.config.js        # PostCSS configuration
-├── tsconfig.json            # TypeScript configuration
-└── README.md                # This file
+├── package.json
+├── tailwind.config.js
+├── postcss.config.js
+├── tsconfig.json
+└── README.md
 ```
 
 ## 🎨 Features in Detail
@@ -597,13 +674,42 @@ MIT License. See [LICENSE](LICENSE) for details.
 
 ---
 
-### 🕣 Phase 3: Personalization & Export – **⬜ Not Started**
+### 🟡 Phase 3: Personalization & Export – **🚧 In Progress**
+- ✅ **Supabase Authentication System**
+  - User registration with email/password
+  - Email verification flow with confirmation links
+  - Password reset functionality
+  - JWT token management with automatic refresh
+  - Secure session management
+- ✅ **User Interface & Navigation**
+  - Login/signup forms with validation
+  - Protected routes for authenticated users
+  - User profile dropdown in header
+  - Settings page for user preferences
+  - Email verification modals and redirects
+- ✅ **Security Features**
+  - Automatic token refresh on 401 errors
+  - Request interceptors for auth headers
+  - Protected route wrapper components
+  - Secure logout functionality
+  - Email confirmation handling
+- ✅ **User Preferences & Settings**
+  - Theme selection (light/dark/system)
+  - Font size and line height customization
+  - Language preferences
+  - Auto-save toggle
+  - Account management (delete account)
+- ✅ **Component Organization**
+  - Organized auth components in `/components/auth/`
+  - Comprehensive error handling and user feedback
+  - Toast notifications for user actions
+  - Form validation with react-hook-form and yup
 - ⬜ Export note as Markdown or TXT
 - ⬜ Import notes from file (Markdown / TXT)
 - ⬜ Version history and undo functionality (client-side)
 - ⬜ **Real-time collaboration** UI support
 - ⬜ Localization and **multi-language support** (UI & command handling)
-- ⬜ **User-specific theme and settings**
+- ✅ **User-specific theme and settings**
 - ⬜ **Plugin system for custom commands**
 - ⬜ **Integration with cloud storage** (e.g., Dropbox, Google Drive)
 - ⬜ **File import/export**

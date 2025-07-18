@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Password Reset URL</title>
+</head>
+<body>
+    <h1>Test Password Reset URL</h1>
+    <p>Click the link below to test the password reset flow:</p>
+    <a href="http://localhost:3000/?token=e715c99989ee6f59420a61eb146581be453f99635bc810dd376a4721&type=recovery&redirect_to=http://localhost:3000" target="_blank">
+        Test Password Reset Link
+    </a>
+    
+    <h2>What should happen:</h2>
+    <ol>
+        <li>Link opens in new tab</li>
+        <li>Root page detects token and type=recovery</li>
+        <li>Console logs show token detection</li>
+        <li>Page redirects to /auth/reset-password</li>
+        <li>Reset password form appears</li>
+        <li>URL is cleaned (no token visible)</li>
+    </ol>
+    
+    <h2>Console Logs to Look For:</h2>
+    <ul>
+        <li>🔍 ROOT PAGE - Current URL: http://localhost:3000/?token=...</li>
+        <li>🔍 ROOT PAGE - Extracted values: {token: "e715c99989ee6f59420a...", type: "recovery"}</li>
+        <li>🔄 Password reset token detected on root page, redirecting to /auth/reset-password</li>
+        <li>🔍 RESET PAGE - Current URL: http://localhost:3000/auth/reset-password?token=...</li>
+        <li>🔑 Password reset token found: e715c99989ee6f59420a...</li>
+    </ul>
+</body>
+</html>
