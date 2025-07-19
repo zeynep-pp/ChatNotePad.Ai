@@ -40,6 +40,13 @@ export default function ChatInterface({
   commandSuggestions,
   onQuickTransform
 }: ChatInterfaceProps) {
+  // Send butonu için renk değişkeni (sadece light modda mor)
+  const { isDarkMode } = require('../contexts/ThemeContext').useTheme();
+  const sendBtnColor = isDarkMode ? "bg-blue-600 hover:bg-blue-700 text-white" : "bg-white text-purple-700 border border-purple-700 hover:bg-purple-50";
+  // Ampul butonu için renk değişkeni (sadece light modda mor)
+  const actionIconColor = isDarkMode
+    ? 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-blue-100 dark:hover:bg-blue-900 hover:text-blue-600 dark:hover:text-blue-400'
+    : 'bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 hover:text-purple-800';
   return (
     <div className="fixed bottom-0 left-0 w-full bg-white/95 dark:bg-gray-900/95 border-t border-gray-200 dark:border-gray-700 z-10 shadow-lg" style={{backdropFilter: 'blur(8px)'}}>
       {/* Command History Panel */}
@@ -125,11 +132,7 @@ export default function ChatInterface({
                 setShowSuggestions(!showSuggestions);
                 setShowHistory(false);
               }}
-              className={`p-2 rounded-full transition-all duration-200 cursor-pointer hover:scale-105 ${
-                showSuggestions 
-                  ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' 
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-blue-100 dark:hover:bg-blue-900 hover:text-blue-600 dark:hover:text-blue-400'
-              }`}
+              className={`p-2 rounded-full transition-all duration-200 cursor-pointer hover:scale-105 ${actionIconColor}`}
               title="Toggle command suggestions"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -194,7 +197,7 @@ export default function ChatInterface({
               <div className="relative">
                 <button
                   type="submit"
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm flex items-center gap-2 transform hover:scale-105 active:scale-95"
+                  className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm flex items-center gap-2 transform hover:scale-105 active:scale-95 ${sendBtnColor}`}
                   disabled={loading || !command.trim()}
                 >
                   {loading ? (

@@ -377,62 +377,57 @@ function SmartNotePageContent() {
     }
   };
 
+  // Başlık rengi sadece light modda mor olacak şekilde ayarlanıyor
+  const titleColor = isDarkMode ? "text-gray-900 dark:text-white" : "text-fuchsia-700";
+  // Başlık ve Sign In butonu için renk değişkeni (sadece light modda mor)
+  const mainColor = isDarkMode ? "text-gray-900 dark:text-white" : "text-purple-700";
+  const signInBtnColor = isDarkMode ? "bg-blue-600 hover:bg-blue-700 text-white" : "bg-white text-purple-700 border border-purple-700 hover:bg-purple-50";
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-300 dark:from-gray-900 dark:to-gray-800 flex flex-col">
         {/* Header */}
-        <header className="w-full py-6 px-4 flex flex-col items-center bg-white/80 dark:bg-gray-900/80 shadow-md">
-        <div className="w-full max-w-4xl flex justify-between items-center mb-4">
-          <div className="flex-1">
-            {user && (
-              <a
-                href="/notes"
-                className="inline-flex items-center text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors duration-200"
+        <header className="w-full py-6 px-4 flex flex-col bg-white/80 dark:bg-gray-900/80 shadow-md">
+          <div className="w-full flex items-center mb-2">
+            <h1 className={`text-2xl font-bold tracking-tight ${mainColor}`}>ChatNotePad.AI</h1>
+            <div className="flex-1 flex justify-end space-x-3">
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-200"
+                aria-label="Toggle theme"
               >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                My Notes
-              </a>
-            )}
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">ChatNotePad.AI</h1>
-          <div className="flex-1 flex justify-end space-x-3">
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-200"
-              aria-label="Toggle theme"
-            >
-              {isDarkMode ? (
-                <svg className="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
+                {isDarkMode ? (
+                  <svg className="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                  </svg>
+                )}
+              </button>
+              {user ? (
+                <UserProfileDropdown />
               ) : (
-                <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                </svg>
+                <a
+                  href="/auth"
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 ${signInBtnColor}`}
+                >
+                  Sign In
+                </a>
               )}
-            </button>
-            {user ? (
-              <UserProfileDropdown />
-            ) : (
-              <a
-                href="/auth"
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors duration-200"
-              >
-                Sign In
-              </a>
-            )}
+            </div>
           </div>
-        </div>
-        <p className="text-gray-600 dark:text-gray-300 text-center max-w-xl text-sm">
-          AI-powered note editing and transformation. Write your note, enter a natural language command, and see the changes instantly with live diff!
-          {!user && (
-            <span className="block mt-2 text-xs opacity-75">
-              Using as guest. <a href="/auth" className="text-blue-600 dark:text-blue-400 hover:underline">Sign in</a> to save notes permanently.
-            </span>
-          )}
-        </p>
-      </header>
+          <div className="w-full max-w-xl pl-0 mt-1">
+            <p className="text-gray-600 dark:text-gray-300 text-left text-sm">
+              AI-powered note editing and transformation. Write your note, enter a natural language command, and see the changes instantly with live diff!
+              {!user && (
+                <span className="block mt-2 text-xs opacity-75">
+                  Using as guest. <a href="/auth" className="text-blue-600 dark:text-blue-400 hover:underline">Sign in</a> to save notes permanently.
+                </span>
+              )}
+            </p>
+          </div>
+        </header>
       
 
       {/* Main Content */}
