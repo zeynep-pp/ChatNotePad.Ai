@@ -52,12 +52,13 @@ const TextEditor = forwardRef<HTMLDivElement, TextEditorProps>(({
           options={{
             minimap: { enabled: false },
             lineNumbers: "on",
-            theme: isDarkMode ? "vs-dark" : "vs",
             wordWrap: "on",
             fontSize: 13,
             scrollBeyondLastLine: false,
             placeholder: "Start typing your text here... (Supports Markdown formatting)",
+            automaticLayout: true,
           }}
+          theme={isDarkMode ? "vs-dark" : "vs"}
         />
       </div>
     </section>

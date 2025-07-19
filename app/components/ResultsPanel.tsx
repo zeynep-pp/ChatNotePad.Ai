@@ -105,8 +105,8 @@ const ResultsPanel = forwardRef<HTMLDivElement, ResultsPanelProps>(({
                 )}
                 {error.type === 'invalid_command' && (
                   <div className="mt-3 p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded text-xs">
-                    <div className="font-medium text-yellow-800 dark:text-yellow-200 mb-1">💡 Try these instead:</div>
-                    <ul className="text-yellow-700 dark:text-yellow-300 space-y-1">
+                    <div className="font-medium text-yellow-900 dark:text-yellow-200 mb-1">💡 Try these instead:</div>
+                    <ul className="text-yellow-800 dark:text-yellow-300 space-y-1">
                       <li>• "Make it more formal"</li>
                       <li>• "Fix grammar and spelling"</li>
                       <li>• "Convert to bullet points"</li>

@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { ProtectedRoute } from '../components/auth/ProtectedRoute';
 import { UserProfileDropdown } from '../components/auth/UserProfileDropdown';
 import { ConfirmationModal } from '../components/ConfirmationModal';
@@ -10,6 +11,7 @@ import { Toast } from '../components/Toast';
 
 export default function SettingsPage() {
   const { user, preferences, updatePreferences, loading, deleteAccount } = useAuth();
+  const { isDarkMode, toggleTheme } = useTheme();
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
@@ -19,11 +21,35 @@ export default function SettingsPage() {
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error' | 'warning' | 'info'>('info');
 
+  // Current theme state for display
+  const getCurrentTheme = () => {
+    if (preferences?.theme) {
+      return preferences.theme;
+    }
+    // Fallback based on current mode
+    return isDarkMode ? 'dark' : 'light';
+  };
+
   const handleThemeChange = async (theme: 'light' | 'dark' | 'system') => {
     if (!preferences) return;
     
     try {
       setSaving(true);
+      
+      // Update global theme context immediately
+      if (theme === 'light' && isDarkMode) {
+        toggleTheme();
+      } else if (theme === 'dark' && !isDarkMode) {
+        toggleTheme();
+      } else if (theme === 'system') {
+        // For system, detect and apply system preference
+        const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (systemDark !== isDarkMode) {
+          toggleTheme();
+        }
+      }
+      
+      // Update backend preferences
       await updatePreferences({ ...preferences, theme });
       setSaveMessage('Theme updated successfully');
       setTimeout(() => setSaveMessage(''), 3000);
@@ -208,7 +234,7 @@ export default function SettingsPage() {
                         onClick={() => handleThemeChange(theme as 'light' | 'dark' | 'system')}
                         disabled={saving}
                         className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                          preferences?.theme === theme
+                          getCurrentTheme() === theme
                             ? 'bg-blue-600 text-white'
                             : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
                         } ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}

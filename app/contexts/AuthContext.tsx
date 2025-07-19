@@ -297,6 +297,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  // Check authentication on mount
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
   const value: AuthContextType = {
     ...state,
     signIn,

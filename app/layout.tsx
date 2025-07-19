@@ -1,5 +1,6 @@
 import "./globals.css";
 import { AuthProvider } from './contexts/AuthContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { PasswordResetRedirect } from './components/auth/PasswordResetRedirect';
 import { EmailConfirmationRedirect } from './components/auth/EmailConfirmationRedirect';
 
@@ -16,11 +17,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <AuthProvider>
-          <PasswordResetRedirect />
-          <EmailConfirmationRedirect />
-          {children}
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <PasswordResetRedirect />
+            <EmailConfirmationRedirect />
+            {children}
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
