@@ -104,9 +104,9 @@ const ResultsPanel = forwardRef<HTMLDivElement, ResultsPanelProps>(({
                   </div>
                 )}
                 {error.type === 'invalid_command' && (
-                  <div className="mt-3 p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded text-xs">
-                    <div className="font-medium text-yellow-900 dark:text-yellow-200 mb-1">💡 Try these instead:</div>
-                    <ul className="text-yellow-800 dark:text-yellow-300 space-y-1">
+                  <div className="mt-3 p-2 bg-orange-50 dark:bg-yellow-900/20 border border-orange-200 dark:border-yellow-800 rounded text-xs">
+                    <div className="font-medium text-orange-900 dark:text-yellow-200 mb-1">💡 Try these instead:</div>
+                    <ul className="text-orange-800 dark:text-yellow-300 space-y-1">
                       <li>• "Make it more formal"</li>
                       <li>• "Fix grammar and spelling"</li>
                       <li>• "Convert to bullet points"</li>
@@ -177,11 +177,27 @@ const ResultsPanel = forwardRef<HTMLDivElement, ResultsPanelProps>(({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
               </svg>
             </div>
-            <h3 className="font-medium text-gray-800 dark:text-gray-200 mb-2">AI is ready to help!</h3>
+            <h3 
+              className="font-medium text-gray-800 dark:text-gray-200 mb-2"
+              style={isDarkMode ? {} : { color: '#831843' }}
+            >
+              AI is ready to help!
+            </h3>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Write your text on the left, then use the chat below to transform it with natural language commands.</p>
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-3 text-left">
-              <div className="text-xs font-medium text-yellow-800 dark:text-yellow-200 mb-1">💡 Example commands:</div>
-              <div className="text-xs text-yellow-700 dark:text-yellow-300 space-y-1">
+            <div 
+              className={`dark:bg-yellow-900/20 rounded-lg p-3 text-left border ${isDarkMode ? 'border-yellow-400' : ''}`}
+              style={isDarkMode ? {} : { backgroundColor: '#fdf2f8', borderColor: '#fce7f3', border: '1px solid' }}
+            >
+              <div 
+                className="text-xs font-medium dark:text-yellow-200 mb-1" 
+                style={isDarkMode ? {} : { color: '#831843' }}
+              >
+                💡 Example commands:
+              </div>
+              <div 
+                className="text-xs dark:text-yellow-300 space-y-1" 
+                style={isDarkMode ? {} : { color: '#be185d' }}
+              >
                 <div>• "Make it more formal"</div>
                 <div>• "Fix grammar and spelling"</div>
                 <div>• "Convert to bullet points"</div>
