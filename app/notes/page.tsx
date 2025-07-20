@@ -22,18 +22,21 @@ export default function NotesPage() {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [showFavorites, setShowFavorites] = useState(false);
 
-  const { createNote, deleteNote, toggleFavorite } = useNotes();
+  const { createNote, updateNote, deleteNote, toggleFavorite } = useNotes();
 
-  // Handle saving pending note from AI Editor
+  // Handle saving/updating pending note from AI Editor
   useEffect(() => {
     const action = searchParams.get('action');
-    if (action === 'save' && user) {
+    if ((action === 'save' || action === 'update') && user) {
       const pendingNoteData = localStorage.getItem('pendingNote');
       if (pendingNoteData) {
         try {
           const pendingNote = JSON.parse(pendingNoteData);
-          // Auto-save the note
-          handleSavePendingNote(pendingNote);
+          if (action === 'update') {
+            handleUpdatePendingNote(pendingNote);
+          } else {
+            handleSavePendingNote(pendingNote);
+          }
           localStorage.removeItem('pendingNote');
         } catch (error) {
           console.error('Error parsing pending note:', error);
@@ -44,10 +47,13 @@ export default function NotesPage() {
 
   const handleSavePendingNote = async (noteData: any) => {
     try {
+      // Combine ai-generated tag with user tags
+      const allTags = ['ai-generated', ...(noteData.userTags || [])];
+      
       await createNote({
         title: `Note from AI Editor - ${new Date().toLocaleDateString()}`,
         content: noteData.content,
-        tags: ['ai-generated'],
+        tags: allTags,
         is_favorite: false
       });
       // Refresh the page to show the new note
@@ -57,6 +63,32 @@ export default function NotesPage() {
     }
   };
 
+  const handleUpdatePendingNote = async (noteData: any) => {
+    try {
+      if (!noteData.editingNote?.id) {
+        console.error('No note ID for update');
+        return;
+      }
+
+      // Combine ai-generated tag with user tags (keep original ai-generated if it was there)
+      const originalTags = noteData.editingNote.tags || [];
+      const hasAiGenerated = originalTags.includes('ai-generated');
+      const userTags = noteData.userTags || [];
+      const allTags = hasAiGenerated 
+        ? ['ai-generated', ...userTags.filter(tag => tag !== 'ai-generated')]
+        : userTags;
+      
+      await updateNote(noteData.editingNote.id, {
+        content: noteData.content,
+        tags: allTags,
+      });
+      
+      // Refresh the page to show the updated note
+      window.location.href = '/notes';
+    } catch (error) {
+      console.error('Error updating note:', error);
+    }
+  };
 
   const handleEditNote = (note: Note) => {
     // Navigate to AI Editor with the note content

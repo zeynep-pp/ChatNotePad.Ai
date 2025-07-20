@@ -14,7 +14,7 @@ import { useAuth } from './contexts/AuthContext';
 
 function SmartNotePageContent() {
   const { isDarkMode, toggleTheme } = useTheme();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const [originalText, setOriginalText] = useState("");
   const [command, setCommand] = useState("");
   const [editedText, setEditedText] = useState("");
@@ -30,6 +30,8 @@ function SmartNotePageContent() {
   const [retryCount, setRetryCount] = useState(0);
   const [commandHistory, setCommandHistory] = useState<CommandHistoryItem[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [userTags, setUserTags] = useState<string[]>([]);
+  const [editingNote, setEditingNote] = useState<any>(null);
   
   // Refs for scroll targets
   const historyRef = useRef<HTMLDivElement>(null);
@@ -83,14 +85,23 @@ function SmartNotePageContent() {
     const editingNoteData = localStorage.getItem('editingNote');
     if (editingNoteData) {
       try {
-        const editingNote = JSON.parse(editingNoteData);
-        setOriginalText(editingNote.content || '');
+        const noteData = JSON.parse(editingNoteData);
+        setEditingNote(noteData);
+        setOriginalText(noteData.content || '');
+        setUserTags(noteData.tags?.filter((tag: string) => tag !== 'ai-generated') || []);
         localStorage.removeItem('editingNote');
       } catch (error) {
         console.error('Failed to parse editing note:', error);
       }
     }
   }, []);
+
+  // Sync original text to edited text if no AI result exists
+  useEffect(() => {
+    if (originalText && !editedText) {
+      setEditedText(originalText);
+    }
+  }, [originalText, editedText]);
 
   const saveHistoryToStorage = (history: CommandHistoryItem[]) => {
     try {
@@ -356,12 +367,21 @@ function SmartNotePageContent() {
   const handleSaveAsNote = () => {
     // Redirect to notes page with note content to save
     if (editedText) {
-      localStorage.setItem('pendingNote', JSON.stringify({
+      const noteData = {
         content: editedText,
         originalText: originalText,
-        command: command
-      }));
-      window.location.href = '/notes?action=save';
+        command: command,
+        userTags: userTags,
+        editingNote: editingNote // Include editing note for update
+      };
+      
+      localStorage.setItem('pendingNote', JSON.stringify(noteData));
+      
+      if (editingNote) {
+        window.location.href = '/notes?action=update';
+      } else {
+        window.location.href = '/notes?action=save';
+      }
     }
   };
 
@@ -460,6 +480,7 @@ function SmartNotePageContent() {
             </p>
           </div>
         </header>
+
       
 
       {/* Main Content */}
@@ -489,6 +510,10 @@ function SmartNotePageContent() {
             onClearError={clearError}
             onDiffScroll={handleDiffScroll}
             onSaveAsNote={handleSaveAsNote}
+            onTextChange={setEditedText}
+            userTags={userTags}
+            onTagsChange={setUserTags}
+            editingNote={editingNote}
             isSignedIn={!!user}
           />
         </div>

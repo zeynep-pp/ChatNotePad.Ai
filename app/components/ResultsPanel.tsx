@@ -4,6 +4,7 @@ import { forwardRef } from 'react';
 import DiffViewer from "react-diff-viewer";
 import { AgentInfo, ErrorState } from '../types';
 import AgentFeedbackBadge from './AgentFeedbackBadge';
+import { TagInput } from './notes/TagInput';
 
 interface ResultsPanelProps {
   editedText: string;
@@ -18,6 +19,10 @@ interface ResultsPanelProps {
   onClearError: () => void;
   onDiffScroll?: (scrollTop: number) => void;
   onSaveAsNote?: (text: string) => void;
+  onTextChange?: (text: string) => void;
+  userTags?: string[];
+  onTagsChange?: (tags: string[]) => void;
+  editingNote?: any;
   isSignedIn?: boolean;
 }
 
@@ -34,6 +39,10 @@ const ResultsPanel = forwardRef<HTMLDivElement, ResultsPanelProps>(({
   onClearError,
   onDiffScroll,
   onSaveAsNote,
+  onTextChange,
+  userTags = [],
+  onTagsChange,
+  editingNote,
   isSignedIn
 }, ref) => {
   // Ampul ikonunun light modda mor olması için renk değişkeni
@@ -42,7 +51,7 @@ const ResultsPanel = forwardRef<HTMLDivElement, ResultsPanelProps>(({
   return (
     <section className="flex-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 flex flex-col min-h-[400px] border border-gray-200 dark:border-gray-700">
       <div className="flex justify-between items-center mb-3">
-        <div className="font-semibold text-gray-800 dark:text-gray-100">Edited Note</div>
+        <div className="font-semibold text-gray-800 dark:text-gray-100">Final Note</div>
         {editedText && (
           <div className="flex gap-2">
             {isSignedIn && onSaveAsNote && (
@@ -148,11 +157,37 @@ const ResultsPanel = forwardRef<HTMLDivElement, ResultsPanelProps>(({
           
           {/* Edited Text Area */}
           <div className="bg-gray-50 dark:bg-gray-700 rounded p-3 border border-gray-200 dark:border-gray-600 transform transition-all duration-300 hover:shadow-md">
-            <div className={`font-medium mb-1 text-sm ${isDarkMode ? 'text-gray-300' : 'text-black'}`}>Result:</div>
+            <div className={`font-medium mb-1 text-sm ${isDarkMode ? 'text-gray-300' : 'text-black'}`}>Result (editable):</div>
             <div className="max-h-24 overflow-auto">
-              <pre className={`whitespace-pre-wrap text-sm ${isDarkMode ? 'text-gray-200' : 'text-black'}`}>{editedText}</pre>
+              <textarea
+                value={editedText}
+                onChange={(e) => onTextChange?.(e.target.value)}
+                className={`w-full min-h-[60px] resize-none bg-transparent border-0 outline-none text-sm p-0 ${isDarkMode ? 'text-gray-200' : 'text-black'} placeholder-gray-500`}
+                placeholder="Your final note will appear here..."
+              />
             </div>
           </div>
+
+          {/* Tags Section */}
+          {isSignedIn && onTagsChange && (
+            <div className="bg-gray-50 dark:bg-gray-700 rounded p-3 border border-gray-200 dark:border-gray-600">
+              {editingNote && (
+                <div className={`mb-2 p-2 rounded text-xs border ${isDarkMode ? 'bg-blue-900/20 border-blue-700' : 'bg-orange-50 border-orange-200'}`}>
+                  <div className={`font-medium ${isDarkMode ? 'text-blue-200' : 'text-orange-800'}`}>
+                    ✏️ Editing: {editingNote.title || 'Untitled Note'}
+                  </div>
+                </div>
+              )}
+              <div className={`font-medium mb-2 text-sm ${isDarkMode ? 'text-gray-300' : 'text-black'}`}>
+                Tags {editingNote ? '(will update note tags)' : '(will be added to saved note)'}:
+              </div>
+              <TagInput
+                tags={userTags}
+                onChange={onTagsChange}
+                placeholder="Add tags for your note..."
+              />
+            </div>
+          )}
           
           {/* Diff Viewer */}
           <div className="flex-1 min-h-[150px] overflow-auto scroll-smooth" onScroll={(e) => onDiffScroll?.(e.currentTarget.scrollTop)}>

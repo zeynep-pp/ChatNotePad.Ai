@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useTags } from '../../hooks/useTags';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface TagInputProps {
   tags: string[];
@@ -22,6 +23,16 @@ export const TagInput = ({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const { tags: allTags } = useTags();
+  const { isDarkMode } = useTheme();
+
+  // Tag colors matching send button style
+  const tagStyle = isDarkMode 
+    ? "bg-blue-600 text-white border-blue-600" 
+    : "bg-white text-purple-700 border border-purple-700";
+  
+  const tagCloseStyle = isDarkMode
+    ? "text-blue-200 hover:text-white hover:bg-blue-500"
+    : "text-purple-600 hover:text-purple-800 hover:bg-purple-50";
 
   // Filter suggestions based on input
   const suggestions = (allTags || []).filter(tag => 
@@ -31,8 +42,11 @@ export const TagInput = ({
 
   const addTag = (tag: string) => {
     const trimmedTag = tag.trim();
+    console.log('Adding tag:', trimmedTag, 'Current tags:', tags);
     if (trimmedTag && !tags.includes(trimmedTag)) {
-      onChange([...tags, trimmedTag]);
+      const newTags = [...tags, trimmedTag];
+      console.log('New tags array:', newTags);
+      onChange(newTags);
     }
     setInputValue('');
     setShowSuggestions(false);
@@ -84,19 +98,19 @@ export const TagInput = ({
 
   return (
     <div className={`relative ${className}`}>
-      <div className="flex flex-wrap gap-2 p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 min-h-[2.5rem] focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-colors duration-200">
+      <div className="flex flex-wrap gap-2 p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 min-h-[2.5rem] focus-within:ring-2 focus-within:ring-purple-500 focus-within:border-purple-500 transition-colors duration-200">
         {/* Existing tags */}
         {tags.map((tag, index) => (
           <span
             key={index}
-            className="inline-flex items-center px-2 py-1 rounded-md text-sm bg-purple-200 dark:bg-purple-900/30 text-gray-800 dark:text-purple-200"
+            className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${tagStyle}`}
           >
             {tag}
             <button
               type="button"
               onClick={() => removeTag(tag)}
               disabled={disabled}
-              className="ml-1 text-blue-600 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-100 transition-colors duration-200"
+              className={`ml-2 transition-colors duration-200 rounded-full p-0.5 ${tagCloseStyle}`}
             >
               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

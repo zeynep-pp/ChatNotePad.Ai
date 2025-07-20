@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useTags } from '../../hooks/useTags';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface TagManagerProps {
   selectedTags?: string[];
@@ -21,6 +22,16 @@ export const TagManager = ({
   const { tags, loading, error } = useTags();
   const [showAllTags, setShowAllTags] = useState(false);
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
+  const { isDarkMode } = useTheme();
+
+  // Tag colors matching send button style  
+  const tagStyle = isDarkMode 
+    ? "bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600" 
+    : "bg-gray-100 text-purple-700 border-purple-200 hover:bg-purple-50";
+  
+  const selectedTagStyle = isDarkMode
+    ? "bg-blue-600 text-white border-blue-600"
+    : "bg-purple-600 text-white border-purple-600";
 
   const handleTagToggle = (tag: string) => {
     if (!onTagsChange) return;
@@ -134,11 +145,9 @@ export const TagManager = ({
                 <button
                   key={index}
                   onClick={() => handleTagToggle(tag)}
-                  className={`px-3 py-1 rounded-full text-sm transition-all duration-200 border
-                    ${isSelected
-                      ? 'bg-purple-600 text-white border-purple-600'
-                      : 'bg-gray-100 text-purple-700 border-purple-200 hover:bg-purple-50'}
-                  `}
+                  className={`px-3 py-1 rounded-full text-sm transition-all duration-200 border ${
+                    isSelected ? selectedTagStyle : tagStyle
+                  }`}
                 >
                   {tag}
                   {isSelected && (
@@ -177,7 +186,7 @@ export const TagManager = ({
                 </span>
               )}
               {selectedTags.slice(0, 3).map(tag => (
-                <span key={tag} className="inline-block px-2 py-1 rounded bg-purple-200 dark:bg-purple-900/30 text-gray-800 dark:text-purple-300">
+                <span key={tag} className={`inline-block px-2 py-1 rounded text-xs font-medium ${selectedTagStyle}`}>
                   {tag}
                 </span>
               ))}

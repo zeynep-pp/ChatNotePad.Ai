@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Note } from '../../types/notes';
 import { formatDistanceToNow } from '../../lib/utils';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface NoteCardProps {
   note: Note;
@@ -22,6 +23,16 @@ export const NoteCard = ({
   isSelected = false 
 }: NoteCardProps) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const { isDarkMode } = useTheme();
+
+  // Tag colors matching send button style
+  const tagStyle = isDarkMode 
+    ? "bg-blue-600 text-white" 
+    : "bg-white text-purple-700 border border-purple-700";
+  
+  const aiGeneratedTagStyle = isDarkMode
+    ? "bg-purple-600 text-white"
+    : "bg-purple-600 text-white";
 
   const handleDelete = () => {
     onDelete(note.id);
@@ -115,11 +126,9 @@ export const NoteCard = ({
           {note.tags.slice(0, 3).map((tag, index) => (
             <span 
               key={index}
-              className={`px-2 py-1 text-xs rounded font-medium
-                ${tag === 'ai-generated'
-                  ? 'bg-purple-600 text-white dark:bg-purple-500 dark:text-white'
-                  : 'bg-gray-100 text-purple-700 dark:bg-purple-700 dark:text-white'}
-              `}
+              className={`px-2 py-1 text-xs rounded font-medium ${
+                tag === 'ai-generated' ? aiGeneratedTagStyle : tagStyle
+              }`}
             >
               {tag}
             </span>
