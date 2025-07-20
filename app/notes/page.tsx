@@ -2,15 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { ProtectedRoute } from '../components/auth/ProtectedRoute';
 import { NoteList } from '../components/notes/NoteList';
 import { SearchBar } from '../components/notes/SearchBar';
+import { SearchResultsList } from '../components/notes/SearchResultsList';
 import { TagManager } from '../components/notes/TagManager';
 import { useNotes } from '../hooks/useNotes';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { UserProfileDropdown } from '../components/auth/UserProfileDropdown';
-import { Note, NoteCreate, NoteUpdate } from '../types/notes';
+import { Note } from '../types/notes';
 
 export default function NotesPage() {
   const { isDarkMode, toggleTheme } = useTheme();
@@ -18,10 +18,11 @@ export default function NotesPage() {
   const searchParams = useSearchParams();
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Note[] | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [showFavorites, setShowFavorites] = useState(false);
 
-  const { createNote, updateNote, deleteNote, toggleFavorite } = useNotes();
+  const { createNote, deleteNote, toggleFavorite } = useNotes();
 
   // Handle saving pending note from AI Editor
   useEffect(() => {
@@ -186,7 +187,16 @@ export default function NotesPage() {
             <div className="flex flex-col md:flex-row gap-4 mb-6">
               <div className="w-full md:w-2/3">
                 <SearchBar
-                  onQueryChange={setSearchQuery}
+                  onQueryChange={(query) => {
+                    setSearchQuery(query);
+                    // Clear search results when query is cleared
+                    if (!query.trim()) {
+                      setSearchResults(null);
+                    }
+                  }}
+                  onResults={(results) => {
+                    setSearchResults(results);
+                  }}
                   placeholder="Search notes..."
                 />
               </div>
@@ -202,17 +212,26 @@ export default function NotesPage() {
           </div>
 
           {/* Main Content */}
-          <NoteList
-            onNoteSelect={setSelectedNote}
-            filters={{
-              search: searchQuery,
-              tags: selectedTags,
-              is_favorite: showFavorites || undefined,
-            }}
-            onEdit={handleEditNote}
-            onDelete={handleDeleteNote}
-            onToggleFavorite={handleToggleFavorite}
-          />
+          {searchQuery.trim() && searchResults !== null ? (
+            <SearchResultsList
+              results={searchResults}
+              onNoteSelect={setSelectedNote}
+              onEdit={handleEditNote}
+              onDelete={handleDeleteNote}
+              onToggleFavorite={handleToggleFavorite}
+            />
+          ) : (
+            <NoteList
+              onNoteSelect={setSelectedNote}
+              filters={{
+                tags: selectedTags,
+                is_favorite: showFavorites || undefined,
+              }}
+              onEdit={handleEditNote}
+              onDelete={handleDeleteNote}
+              onToggleFavorite={handleToggleFavorite}
+            />
+          )}
         </div>
       </div>
   );
