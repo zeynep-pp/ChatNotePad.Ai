@@ -51,7 +51,7 @@ export class AuthAPI {
       headers: this.getAuthHeaders()
     });
     
-    return response.data.user;
+    return response.data;
   }
 
   static async getUserPreferences(): Promise<UserPreferences> {

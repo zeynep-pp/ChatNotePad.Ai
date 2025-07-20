@@ -46,7 +46,7 @@ export const TagManager = ({
     }
   };
 
-  const displayedTags = showAllTags ? tags : tags.slice(0, 10);
+  const displayedTags = showAllTags ? (tags || []) : (tags || []).slice(0, 10);
 
   if (loading) {
     return (
@@ -111,18 +111,18 @@ export const TagManager = ({
       )}
 
       {/* Tags section */}
-      {tags.length > 0 && (
+      {(tags && tags.length > 0) && (
         <div>
           <div className="flex justify-between items-center mb-3">
             <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
               Tags ({selectedTags.length} selected)
             </h4>
-            {tags.length > 10 && (
+            {(tags && tags.length > 10) && (
               <button
                 onClick={() => setShowAllTags(!showAllTags)}
                 className="text-xs text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200"
               >
-                {showAllTags ? 'Show less' : `Show all ${tags.length}`}
+                {showAllTags ? 'Show less' : `Show all ${tags?.length || 0}`}
               </button>
             )}
           </div>
@@ -134,11 +134,11 @@ export const TagManager = ({
                 <button
                   key={index}
                   onClick={() => handleTagToggle(tag)}
-                  className={`px-3 py-1 rounded-full text-sm transition-all duration-200 ${
-                    isSelected
-                      ? 'bg-blue-500 text-white shadow-sm'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                  }`}
+                  className={`px-3 py-1 rounded-full text-sm transition-all duration-200 border
+                    ${isSelected
+                      ? 'bg-purple-600 text-white border-purple-600'
+                      : 'bg-gray-100 text-purple-700 border-purple-200 hover:bg-purple-50'}
+                  `}
                 >
                   {tag}
                   {isSelected && (
@@ -152,7 +152,7 @@ export const TagManager = ({
       )}
 
       {/* Empty state */}
-      {tags.length === 0 && (
+      {(!tags || tags.length === 0) && (
         <div className="text-center py-8 text-gray-500 dark:text-gray-400">
           <svg className="w-8 h-8 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
@@ -177,7 +177,7 @@ export const TagManager = ({
                 </span>
               )}
               {selectedTags.slice(0, 3).map(tag => (
-                <span key={tag} className="inline-block px-2 py-1 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+                <span key={tag} className="inline-block px-2 py-1 rounded bg-purple-200 dark:bg-purple-900/30 text-gray-800 dark:text-purple-300">
                   {tag}
                 </span>
               ))}

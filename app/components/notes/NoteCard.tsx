@@ -114,8 +114,12 @@ export const NoteCard = ({
         <div className="flex flex-wrap gap-1 mb-3">
           {note.tags.slice(0, 3).map((tag, index) => (
             <span 
-              key={index} 
-              className="px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded"
+              key={index}
+              className={`px-2 py-1 text-xs rounded font-medium
+                ${tag === 'ai-generated'
+                  ? 'bg-purple-600 text-white dark:bg-purple-500 dark:text-white'
+                  : 'bg-gray-100 text-purple-700 dark:bg-purple-700 dark:text-white'}
+              `}
             >
               {tag}
             </span>

@@ -78,6 +78,18 @@ function SmartNotePageContent() {
         console.error('Failed to parse command history:', error);
       }
     }
+
+    // Load editing note from localStorage (when coming from My Notes)
+    const editingNoteData = localStorage.getItem('editingNote');
+    if (editingNoteData) {
+      try {
+        const editingNote = JSON.parse(editingNoteData);
+        setOriginalText(editingNote.content || '');
+        localStorage.removeItem('editingNote');
+      } catch (error) {
+        console.error('Failed to parse editing note:', error);
+      }
+    }
   }, []);
 
   const saveHistoryToStorage = (history: CommandHistoryItem[]) => {
@@ -341,6 +353,18 @@ function SmartNotePageContent() {
     }
   };
 
+  const handleSaveAsNote = () => {
+    // Redirect to notes page with note content to save
+    if (editedText) {
+      localStorage.setItem('pendingNote', JSON.stringify({
+        content: editedText,
+        originalText: originalText,
+        command: command
+      }));
+      window.location.href = '/notes?action=save';
+    }
+  };
+
   const reuseCommand = (historyItem: CommandHistoryItem) => {
     setCommand(historyItem.command);
     setOriginalText(historyItem.originalText);
@@ -406,7 +430,15 @@ function SmartNotePageContent() {
                 )}
               </button>
               {user ? (
-                <UserProfileDropdown />
+                <div className="flex items-center space-x-3">
+                  <a
+                    href="/notes"
+                    className="px-4 py-2 rounded-lg font-medium transition-colors duration-200 bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    My Notes
+                  </a>
+                  <UserProfileDropdown />
+                </div>
               ) : (
                 <a
                   href="/auth"
@@ -456,6 +488,8 @@ function SmartNotePageContent() {
             onRetry={handleRetry}
             onClearError={clearError}
             onDiffScroll={handleDiffScroll}
+            onSaveAsNote={handleSaveAsNote}
+            isSignedIn={!!user}
           />
         </div>
       </main>

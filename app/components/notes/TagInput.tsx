@@ -24,7 +24,7 @@ export const TagInput = ({
   const { tags: allTags } = useTags();
 
   // Filter suggestions based on input
-  const suggestions = allTags.filter(tag => 
+  const suggestions = (allTags || []).filter(tag => 
     tag.toLowerCase().includes(inputValue.toLowerCase()) &&
     !tags.includes(tag)
   );
@@ -89,7 +89,7 @@ export const TagInput = ({
         {tags.map((tag, index) => (
           <span
             key={index}
-            className="inline-flex items-center px-2 py-1 rounded-md text-sm bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200"
+            className="inline-flex items-center px-2 py-1 rounded-md text-sm bg-purple-200 dark:bg-purple-900/30 text-gray-800 dark:text-purple-200"
           >
             {tag}
             <button

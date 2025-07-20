@@ -17,6 +17,8 @@ interface ResultsPanelProps {
   onRetry: () => void;
   onClearError: () => void;
   onDiffScroll?: (scrollTop: number) => void;
+  onSaveAsNote?: (text: string) => void;
+  isSignedIn?: boolean;
 }
 
 const ResultsPanel = forwardRef<HTMLDivElement, ResultsPanelProps>(({ 
@@ -30,7 +32,9 @@ const ResultsPanel = forwardRef<HTMLDivElement, ResultsPanelProps>(({
   onCopyToClipboard,
   onRetry,
   onClearError,
-  onDiffScroll
+  onDiffScroll,
+  onSaveAsNote,
+  isSignedIn
 }, ref) => {
   // Ampul ikonunun light modda mor olması için renk değişkeni
   const actionIconBg = isDarkMode ? 'bg-blue-50 dark:bg-blue-900/20' : 'bg-purple-50';
@@ -40,15 +44,28 @@ const ResultsPanel = forwardRef<HTMLDivElement, ResultsPanelProps>(({
       <div className="flex justify-between items-center mb-3">
         <div className="font-semibold text-gray-800 dark:text-gray-100">Edited Note</div>
         {editedText && (
-          <button
-            onClick={() => onCopyToClipboard(editedText)}
-            className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded font-medium transition-colors duration-200 text-sm flex items-center gap-1"
-          >
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-            </svg>
-            {copySuccess || "Copy"}
-          </button>
+          <div className="flex gap-2">
+            {isSignedIn && onSaveAsNote && (
+              <button
+                onClick={() => onSaveAsNote(editedText)}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded font-medium transition-colors duration-200 text-sm flex items-center gap-1"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                Save as Note
+              </button>
+            )}
+            <button
+              onClick={() => onCopyToClipboard(editedText)}
+              className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded font-medium transition-colors duration-200 text-sm flex items-center gap-1"
+            >
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+              {copySuccess || "Copy"}
+            </button>
+          </div>
         )}
       </div>
       
@@ -131,15 +148,15 @@ const ResultsPanel = forwardRef<HTMLDivElement, ResultsPanelProps>(({
           
           {/* Edited Text Area */}
           <div className="bg-gray-50 dark:bg-gray-700 rounded p-3 border border-gray-200 dark:border-gray-600 transform transition-all duration-300 hover:shadow-md">
-            <div className="font-medium text-gray-700 dark:text-gray-300 mb-1 text-sm">Result:</div>
+            <div className={`font-medium mb-1 text-sm ${isDarkMode ? 'text-gray-300' : 'text-black'}`}>Result:</div>
             <div className="max-h-24 overflow-auto">
-              <pre className="whitespace-pre-wrap text-sm text-gray-800 dark:text-gray-200">{editedText}</pre>
+              <pre className={`whitespace-pre-wrap text-sm ${isDarkMode ? 'text-gray-200' : 'text-black'}`}>{editedText}</pre>
             </div>
           </div>
           
           {/* Diff Viewer */}
           <div className="flex-1 min-h-[150px] overflow-auto scroll-smooth" onScroll={(e) => onDiffScroll?.(e.currentTarget.scrollTop)}>
-            <div className="font-medium text-gray-700 dark:text-gray-300 mb-1 text-sm">Changes:</div>
+            <div className={`font-medium mb-1 text-sm ${isDarkMode ? 'text-gray-300' : 'text-black'}`}>Changes:</div>
             <div className="transform transition-all duration-300 hover:shadow-sm">
               <DiffViewer
                 oldValue={originalText}
