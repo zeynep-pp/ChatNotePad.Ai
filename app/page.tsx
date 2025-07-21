@@ -8,13 +8,18 @@ import ResultsPanel from './components/ResultsPanel';
 import ChatInterface from './components/ChatInterface';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { UserProfileDropdown } from './components/auth/UserProfileDropdown';
+import { ImportButton } from './components/notes/ImportButton';
+import { ExportDropdown } from './components/notes/ExportDropdown';
 import { AuthAPI } from './lib/auth';
+import { NotesAPI } from './lib/notesApi';
 import { useTheme } from './contexts/ThemeContext';
 import { useAuth } from './contexts/AuthContext';
+import { useNotes } from './hooks/useNotes';
 
 function SmartNotePageContent() {
   const { isDarkMode, toggleTheme } = useTheme();
   const { user, isAuthenticated } = useAuth();
+  const { notes, fetchNotes } = useNotes();
   const [originalText, setOriginalText] = useState("");
   const [command, setCommand] = useState("");
   const [editedText, setEditedText] = useState("");
@@ -32,6 +37,8 @@ function SmartNotePageContent() {
   const [showHistory, setShowHistory] = useState(false);
   const [userTags, setUserTags] = useState<string[]>([]);
   const [editingNote, setEditingNote] = useState<any>(null);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [noteTitle, setNoteTitle] = useState("");
   
   // Refs for scroll targets
   const historyRef = useRef<HTMLDivElement>(null);
@@ -89,6 +96,8 @@ function SmartNotePageContent() {
         setEditingNote(noteData);
         setOriginalText(noteData.content || '');
         setUserTags(noteData.tags?.filter((tag: string) => tag !== 'ai-generated') || []);
+        setIsFavorite(noteData.is_favorite || false);
+        setNoteTitle(noteData.title || '');
         localStorage.removeItem('editingNote');
       } catch (error) {
         console.error('Failed to parse editing note:', error);
@@ -372,7 +381,9 @@ function SmartNotePageContent() {
         originalText: originalText,
         command: command,
         userTags: userTags,
-        editingNote: editingNote // Include editing note for update
+        editingNote: editingNote, // Include editing note for update
+        isFavorite: isFavorite,
+        noteTitle: noteTitle
       };
       
       localStorage.setItem('pendingNote', JSON.stringify(noteData));
@@ -398,6 +409,66 @@ function SmartNotePageContent() {
     setShowHistory(false);
     // Auto-submit the transformation with the command parameter
     handleCommandSubmit({ preventDefault: () => {} } as React.FormEvent, transformCommand);
+  };
+
+  // Export/Import handlers for AI Editor
+  const handleQuickExport = async (format: 'markdown' | 'txt' | 'pdf', exportNotes: any[]) => {
+    if (!user) {
+      alert('Please sign in to export notes');
+      return;
+    }
+    
+    try {
+      const noteIds = exportNotes.map(note => note.id);
+      await NotesAPI.quickExport(format, noteIds);
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Export failed. Please try again.');
+    }
+  };
+
+  const handleImportFiles = async (files: FileList) => {
+    if (!user) {
+      alert('Please sign in to import notes');
+      return;
+    }
+    
+    try {
+      const stats = await NotesAPI.importNotes(files);
+      alert(`Successfully imported ${stats.imported} of ${stats.total} notes`);
+      fetchNotes(); // Refresh notes
+    } catch (error) {
+      console.error('Import failed:', error);
+      alert('Import failed. Please try again.');
+    }
+  };
+
+  // Quick export current text as note
+  const handleExportCurrentText = async (format: 'markdown' | 'txt' | 'pdf') => {
+    if (!originalText.trim() && !editedText.trim()) {
+      alert('No text to export. Please write something first.');
+      return;
+    }
+    
+    const content = editedText || originalText;
+    const title = `AI Editor Note - ${new Date().toLocaleDateString()}`;
+    
+    try {
+      // Create a temporary note object for export
+      const tempNote = {
+        id: 'temp',
+        title,
+        content,
+        tags: ['ai-editor-export'],
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      
+      await handleQuickExport(format, [tempNote]);
+    } catch (error) {
+      console.error('Export current text failed:', error);
+      alert('Export failed. Please try again.');
+    }
   };
 
   // Diff syncing functions
@@ -450,10 +521,33 @@ function SmartNotePageContent() {
                 )}
               </button>
               {user ? (
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2">
+                  {/* Quick Import/Export for AI Editor */}
+                  <ImportButton
+                    onImport={handleImportFiles}
+                    variant="minimal"
+                    showLabel={false}
+                    className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg"
+                  />
+                  
+                  <div className="relative">
+                    <button
+                      onClick={() => handleExportCurrentText('markdown')}
+                      disabled={!originalText.trim() && !editedText.trim()}
+                      className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Export current text as Markdown"
+                    >
+                      <svg className="w-4 h-4 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </button>
+                  </div>
+                  
+                  <div className="w-px h-6 bg-gray-300 dark:bg-gray-600"></div>
+                  
                   <a
                     href="/notes"
-                    className="px-4 py-2 rounded-lg font-medium transition-colors duration-200 bg-blue-600 hover:bg-blue-700 text-white"
+                    className="px-3 py-2 text-sm rounded-lg font-medium transition-colors duration-200 bg-blue-600 hover:bg-blue-700 text-white"
                   >
                     My Notes
                   </a>
@@ -515,6 +609,10 @@ function SmartNotePageContent() {
             onTagsChange={setUserTags}
             editingNote={editingNote}
             isSignedIn={!!user}
+            isFavorite={isFavorite}
+            onToggleFavorite={setIsFavorite}
+            noteTitle={noteTitle}
+            onTitleChange={setNoteTitle}
           />
         </div>
       </main>

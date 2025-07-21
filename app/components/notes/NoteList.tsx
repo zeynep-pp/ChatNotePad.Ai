@@ -13,6 +13,9 @@ interface NoteListProps {
   onToggleFavorite?: (note: Note) => Promise<void>;
   selectedNoteId?: string;
   className?: string;
+  showSelection?: boolean;
+  selectedNotes?: Note[];
+  onSelectionChange?: (selectedNotes: Note[]) => void;
 }
 
 export const NoteList = ({ 
@@ -22,7 +25,10 @@ export const NoteList = ({
   onDelete,
   onToggleFavorite,
   selectedNoteId,
-  className = ''
+  className = '',
+  showSelection = false,
+  selectedNotes = [],
+  onSelectionChange
 }: NoteListProps) => {
   const {
     notes,
@@ -72,6 +78,22 @@ export const NoteList = ({
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
+  };
+
+  const handleNoteSelection = (note: Note, selected: boolean) => {
+    if (!onSelectionChange) return;
+    
+    let newSelection;
+    if (selected) {
+      newSelection = [...selectedNotes, note];
+    } else {
+      newSelection = selectedNotes.filter(n => n.id !== note.id);
+    }
+    onSelectionChange(newSelection);
+  };
+
+  const isNoteSelected = (noteId: string) => {
+    return selectedNotes.some(note => note.id === noteId);
   };
 
   const renderPagination = () => {
@@ -198,7 +220,9 @@ export const NoteList = ({
             onDelete={handleNoteDelete}
             onToggleFavorite={handleToggleFavoriteAdapter}
             onView={handleNoteView}
-            isSelected={selectedNoteId === note.id}
+            isSelected={showSelection ? isNoteSelected(note.id) : selectedNoteId === note.id}
+            showSelection={showSelection}
+            onSelect={handleNoteSelection}
           />
         ))}
       </div>

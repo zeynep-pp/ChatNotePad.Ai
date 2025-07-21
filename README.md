@@ -9,6 +9,10 @@ The backend for ChatNotePad.Ai should be a FastAPI application that provides the
 - `/summarize` - For text summarization
 - `/api/v1/transform` - For advanced LLM transformations (formalization, simplification, tone shift)
 
+### Export/Import Endpoints 🆕
+- `POST /api/v1/export/notes` - Export notes in various formats (Markdown, TXT, PDF)
+- `POST /api/v1/import/notes` - Import notes from uploaded files (Markdown, TXT, JSON)
+
 ### Authentication Endpoints
 - `POST /auth/signup` - User registration with email verification
 - `POST /auth/signin` - User login
@@ -190,6 +194,63 @@ The application now includes powerful text transformation capabilities powered b
 - **Red:** Removed text
 - **Copy button:** Copy the result to clipboard
 
+### Export/Import Features 🆕
+The application now includes comprehensive note export and import capabilities:
+
+#### Export Options
+1. **Quick Export Dropdown:**
+   - Instant export as Markdown (.md), Plain Text (.txt), or PDF
+   - Export all notes or selected notes
+   - One-click download with automatic file naming
+
+2. **Advanced Export Modal:**
+   - Choose export format with visual format descriptions
+   - Select export mode (all notes vs selected notes)
+   - Progress tracking with percentage indicator
+   - Success/error notifications with detailed feedback
+
+#### Import Options
+1. **Quick Import Button:**
+   - Multiple variants (primary, secondary, minimal)
+   - Direct file selection for immediate import
+   - Supports .md, .txt, and .json files
+
+2. **Advanced Import Modal:**
+   - Drag-and-drop file upload area
+   - File validation with visual feedback (valid/invalid indicators)
+   - Multiple file import with preview
+   - Import progress tracking and statistics
+   - Detailed error reporting for failed imports
+
+3. **Import Area (Empty State):**
+   - Large drag-and-drop zone when no notes exist
+   - File format information and size limits
+   - Prominent call-to-action for first-time users
+
+#### Usage Examples
+```typescript
+// Quick export via dropdown
+<ExportDropdown
+  notes={allNotes}
+  selectedNotes={selectedNotes}
+  onExport={(format, notes) => handleQuickExport(format, notes)}
+/>
+
+// Advanced export modal
+<ExportModal
+  isOpen={showExportModal}
+  onClose={() => setShowExportModal(false)}
+  notes={allNotes}
+  selectedNotes={selectedNotes}
+/>
+
+// Import functionality
+<ImportButton
+  onImport={(files) => handleFileImport(files)}
+  variant="primary"
+/>
+```
+
 ## 🛡️ Error Handling & Recovery
 
 The application now includes comprehensive error handling for a better user experience:
@@ -354,6 +415,15 @@ ChatNotePad.Ai/
 │   │   │   ├── LoginForm.tsx
 │   │   │   ├── SignUpForm.tsx
 │   │   │   ├── ProtectedRoute.tsx
+│   │   │   └── ...
+│   │   ├── notes/               # Notes management components
+│   │   │   ├── ExportModal.tsx  # Export modal with format selection
+│   │   │   ├── ImportModal.tsx  # Import modal with drag-and-drop
+│   │   │   ├── ExportDropdown.tsx # Quick export dropdown
+│   │   │   ├── ImportButton.tsx # Import button and area components
+│   │   │   ├── NotesPageIntegration.tsx # Complete integration example
+│   │   │   ├── NoteList.tsx
+│   │   │   ├── NoteCard.tsx
 │   │   │   └── ...
 │   │   ├── TextEditor.tsx       # Monaco editor
 │   │   ├── ResultsPanel.tsx     # Results display
@@ -724,8 +794,17 @@ MIT License. See [LICENSE](LICENSE) for details.
   - Axios interceptors for request/response handling
   - Error boundary and fallback UI components
 - ✅ **User-specific theme and settings**
-- ⬜ Export note as Markdown or TXT
-- ⬜ Import notes from file (Markdown / TXT)
+- ✅ **Export/Import System**
+  - Export notes as Markdown (.md), Plain Text (.txt), or PDF
+  - Import notes from file (Markdown / TXT / JSON)
+  - Drag-and-drop file upload with validation
+  - Export modal with format selection and progress tracking
+  - Import modal with file preview and batch processing
+  - Quick export dropdown for immediate downloads
+  - File size validation (10MB limit) and format checking
+  - Import statistics with success/error reporting
+  - API integration with `/api/v1/export/*` and `/api/v1/import/*` endpoints
+  - Proper error handling and user feedback throughout
 - ⬜ Version history and undo functionality (client-side)
 - ⬜ **Real-time collaboration** UI support
 - ⬜ Localization and **multi-language support** (UI & command handling)

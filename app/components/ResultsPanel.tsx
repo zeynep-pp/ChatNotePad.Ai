@@ -24,6 +24,10 @@ interface ResultsPanelProps {
   onTagsChange?: (tags: string[]) => void;
   editingNote?: any;
   isSignedIn?: boolean;
+  isFavorite?: boolean;
+  onToggleFavorite?: (isFavorite: boolean) => void;
+  noteTitle?: string;
+  onTitleChange?: (title: string) => void;
 }
 
 const ResultsPanel = forwardRef<HTMLDivElement, ResultsPanelProps>(({ 
@@ -43,7 +47,11 @@ const ResultsPanel = forwardRef<HTMLDivElement, ResultsPanelProps>(({
   userTags = [],
   onTagsChange,
   editingNote,
-  isSignedIn
+  isSignedIn,
+  isFavorite = false,
+  onToggleFavorite,
+  noteTitle = "",
+  onTitleChange
 }, ref) => {
   // Ampul ikonunun light modda mor olması için renk değişkeni
   const actionIconBg = isDarkMode ? 'bg-blue-50 dark:bg-blue-900/20' : 'bg-purple-50';
@@ -55,15 +63,33 @@ const ResultsPanel = forwardRef<HTMLDivElement, ResultsPanelProps>(({
         {editedText && (
           <div className="flex gap-2">
             {isSignedIn && onSaveAsNote && (
-              <button
-                onClick={() => onSaveAsNote(editedText)}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded font-medium transition-colors duration-200 text-sm flex items-center gap-1"
-              >
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3-3m0 0l-3 3m3-3v12" />
-                </svg>
-                Save as Note
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => onSaveAsNote(editedText)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded font-medium transition-colors duration-200 text-sm flex items-center gap-1"
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                  Save as Note
+                </button>
+                {onToggleFavorite && (
+                  <button
+                    onClick={() => onToggleFavorite(!isFavorite)}
+                    className={`px-3 py-1 rounded font-medium transition-colors duration-200 text-sm flex items-center gap-1 ${
+                      isFavorite 
+                        ? 'bg-yellow-500 hover:bg-yellow-600 text-white' 
+                        : 'bg-gray-200 dark:bg-gray-700 hover:bg-yellow-500 hover:text-white text-gray-700 dark:text-gray-300'
+                    }`}
+                    title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                  >
+                    <svg className="w-3 h-3" fill={isFavorite ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                    </svg>
+                    {isFavorite ? 'Favorited' : 'Favorite'}
+                  </button>
+                )}
+              </div>
             )}
             <button
               onClick={() => onCopyToClipboard(editedText)}
@@ -167,6 +193,24 @@ const ResultsPanel = forwardRef<HTMLDivElement, ResultsPanelProps>(({
               />
             </div>
           </div>
+
+          {/* Title Section */}
+          {isSignedIn && onTitleChange && (
+            <div className="bg-gray-50 dark:bg-gray-700 rounded p-3 border border-gray-200 dark:border-gray-600">
+              <div className={`font-medium mb-2 text-sm ${isDarkMode ? 'text-gray-300' : 'text-black'}`}>
+                Note Title:
+              </div>
+              <input
+                type="text"
+                value={noteTitle}
+                onChange={(e) => onTitleChange(e.target.value)}
+                placeholder={editingNote ? "Update note title..." : "Enter note title..."}
+                className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 text-sm transition-colors duration-200 ${
+                  isDarkMode ? 'text-gray-200 placeholder-gray-400' : 'text-black placeholder-gray-500'
+                }`}
+              />
+            </div>
+          )}
 
           {/* Tags Section */}
           {isSignedIn && onTagsChange && (

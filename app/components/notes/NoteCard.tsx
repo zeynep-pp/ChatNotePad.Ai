@@ -12,6 +12,8 @@ interface NoteCardProps {
   onToggleFavorite: (id: string, is_favorite: boolean) => void;
   onView: (note: Note) => void;
   isSelected?: boolean;
+  onSelect?: (note: Note, selected: boolean) => void;
+  showSelection?: boolean;
 }
 
 export const NoteCard = ({ 
@@ -20,7 +22,9 @@ export const NoteCard = ({
   onDelete, 
   onToggleFavorite, 
   onView,
-  isSelected = false 
+  isSelected = false,
+  onSelect,
+  showSelection = false
 }: NoteCardProps) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const { isDarkMode } = useTheme();
@@ -49,6 +53,13 @@ export const NoteCard = ({
     onEdit(note);
   };
 
+  const handleSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.stopPropagation();
+    if (onSelect) {
+      onSelect(note, e.target.checked);
+    }
+  };
+
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowDeleteConfirm(true);
@@ -70,9 +81,21 @@ export const NoteCard = ({
     >
       {/* Header */}
       <div className="flex justify-between items-start mb-2">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate flex-1 mr-2">
-          {note.title}
-        </h3>
+        <div className="flex items-center space-x-2 flex-1 mr-2">
+          {/* Selection checkbox */}
+          {showSelection && (
+            <input
+              type="checkbox"
+              checked={isSelected}
+              onChange={handleSelect}
+              onClick={(e) => e.stopPropagation()}
+              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+            />
+          )}
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
+            {note.title}
+          </h3>
+        </div>
         <div className="flex items-center space-x-1">
           {/* Favorite button */}
           <button

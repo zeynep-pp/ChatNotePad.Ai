@@ -6,10 +6,13 @@ import { NoteList } from '../components/notes/NoteList';
 import { SearchBar } from '../components/notes/SearchBar';
 import { SearchResultsList } from '../components/notes/SearchResultsList';
 import { TagManager } from '../components/notes/TagManager';
+import { ExportModal } from '../components/notes/ExportModal';
+import { ImportModal } from '../components/notes/ImportModal';
 import { useNotes } from '../hooks/useNotes';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { UserProfileDropdown } from '../components/auth/UserProfileDropdown';
+import { NotesAPI } from '../lib/notesApi';
 import { Note } from '../types/notes';
 
 export default function NotesPage() {
@@ -21,8 +24,13 @@ export default function NotesPage() {
   const [searchResults, setSearchResults] = useState<Note[] | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [showFavorites, setShowFavorites] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [selectedNotes, setSelectedNotes] = useState<Note[]>([]);
+  const [isExportLoading, setIsExportLoading] = useState(false);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
 
-  const { createNote, updateNote, deleteNote, toggleFavorite } = useNotes();
+  const { createNote, updateNote, deleteNote, toggleFavorite, notes, fetchNotes } = useNotes();
 
   // Handle saving/updating pending note from AI Editor
   useEffect(() => {
@@ -50,11 +58,13 @@ export default function NotesPage() {
       // Combine ai-generated tag with user tags
       const allTags = ['ai-generated', ...(noteData.userTags || [])];
       
+      const finalTitle = noteData.noteTitle?.trim() || `Note from AI Editor - ${new Date().toLocaleDateString()}`;
+      
       await createNote({
-        title: `Note from AI Editor - ${new Date().toLocaleDateString()}`,
+        title: finalTitle,
         content: noteData.content,
         tags: allTags,
-        is_favorite: false
+        is_favorite: noteData.isFavorite || false
       });
       // Refresh the page to show the new note
       window.location.href = '/notes';
@@ -78,10 +88,18 @@ export default function NotesPage() {
         ? ['ai-generated', ...userTags.filter(tag => tag !== 'ai-generated')]
         : userTags;
       
-      await updateNote(noteData.editingNote.id, {
+      const updateData: any = {
         content: noteData.content,
         tags: allTags,
-      });
+        is_favorite: noteData.isFavorite !== undefined ? noteData.isFavorite : noteData.editingNote.is_favorite
+      };
+      
+      // Only update title if user provided a custom title
+      if (noteData.noteTitle?.trim()) {
+        updateData.title = noteData.noteTitle.trim();
+      }
+      
+      await updateNote(noteData.editingNote.id, updateData);
       
       // Refresh the page to show the updated note
       window.location.href = '/notes';
@@ -113,6 +131,40 @@ export default function NotesPage() {
     } catch (error) {
       console.error('Error toggling favorite:', error);
     }
+  };
+
+  // Export/Import handlers
+  const handleQuickExport = async (format: 'markdown' | 'txt' | 'pdf', exportNotes: Note[]) => {
+    try {
+      setIsExportLoading(true);
+      const noteIds = exportNotes.map(note => note.id);
+      await NotesAPI.quickExport(format, noteIds);
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Export failed. Please try again.');
+    } finally {
+      setIsExportLoading(false);
+    }
+  };
+
+  const handleImportFiles = async (files: FileList) => {
+    try {
+      setIsExportLoading(true);
+      const stats = await NotesAPI.importNotes(files);
+      alert(`Successfully imported ${stats.imported} of ${stats.total} notes`);
+      fetchNotes(); // Refresh the notes list
+    } catch (error) {
+      console.error('Import failed:', error);
+      alert('Import failed. Please try again.');
+    } finally {
+      setIsExportLoading(false);
+    }
+  };
+
+  const handleImportComplete = (stats: { imported: number; total: number; failed: number }) => {
+    alert(`Successfully imported ${stats.imported} of ${stats.total} notes`);
+    fetchNotes(); // Refresh the notes list
+    setShowImportModal(false);
   };
 
 
@@ -215,6 +267,81 @@ export default function NotesPage() {
               </div>
             </div>
 
+            {/* Import/Export Actions */}
+            <div className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+              <div className="flex items-center space-x-4">
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Actions:
+                </h3>
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  {notes ? notes.length : 0} total notes
+                  {selectedNotes.length > 0 && ` • ${selectedNotes.length} selected`}
+                </div>
+                
+                {/* Selection Mode Toggle */}
+                <button
+                  onClick={() => {
+                    setIsSelectionMode(!isSelectionMode);
+                    if (isSelectionMode) {
+                      setSelectedNotes([]);
+                    }
+                  }}
+                  className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                    isSelectionMode
+                      ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400'
+                  }`}
+                >
+                  {isSelectionMode ? 'Exit Selection' : 'Select Notes'}
+                </button>
+                
+                {/* Selection Controls */}
+                {isSelectionMode && notes && notes.length > 0 && (
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => setSelectedNotes(notes)}
+                      className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+                    >
+                      Select All
+                    </button>
+                    <span className="text-gray-300 dark:text-gray-600">|</span>
+                    <button
+                      onClick={() => setSelectedNotes([])}
+                      className="text-xs text-gray-600 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                    >
+                      Clear All
+                    </button>
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex items-center space-x-3">
+                {/* Advanced Import */}
+                <button
+                  onClick={() => setShowImportModal(true)}
+                  disabled={isExportLoading}
+                  className="inline-flex items-center px-4 py-2 text-sm font-medium bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors disabled:opacity-50"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                  </svg>
+                  Import Notes
+                </button>
+                
+                {/* Advanced Export */}
+                <button
+                  onClick={() => setShowExportModal(true)}
+                  disabled={isExportLoading || !notes || notes.length === 0}
+                  className="inline-flex items-center px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors disabled:opacity-50"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Export Notes
+                </button>
+              </div>
+            </div>
+
             {/* Search and Filters */}
             <div className="flex flex-col md:flex-row gap-4 mb-6">
               <div className="w-full md:w-2/3">
@@ -262,9 +389,28 @@ export default function NotesPage() {
               onEdit={handleEditNote}
               onDelete={handleDeleteNote}
               onToggleFavorite={handleToggleFavorite}
+              showSelection={isSelectionMode}
+              selectedNotes={selectedNotes}
+              onSelectionChange={setSelectedNotes}
             />
           )}
         </div>
+
+        {/* Modals */}
+        <ExportModal
+          isOpen={showExportModal}
+          onClose={() => setShowExportModal(false)}
+          notes={notes || []}
+          selectedNotes={selectedNotes}
+          title="Export Your Notes"
+        />
+
+        <ImportModal
+          isOpen={showImportModal}
+          onClose={() => setShowImportModal(false)}
+          onImportComplete={handleImportComplete}
+          title="Import Notes"
+        />
       </div>
   );
 }
