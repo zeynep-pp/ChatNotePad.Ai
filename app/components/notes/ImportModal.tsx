@@ -148,30 +148,39 @@ export const ImportModal: React.FC<ImportModalProps> = ({
       // Use the updated NotesAPI
       const { NotesAPI } = await import('../../lib/notesApi');
       
-      // Create a FileList-like object from valid files
-      const fileArray = validFiles.map(fp => fp.file);
-      const fileList = {
-        length: fileArray.length,
-        item: (index: number) => fileArray[index],
-        [Symbol.iterator]: function* () {
-          for (let i = 0; i < this.length; i++) {
-            yield this.item(i);
-          }
-        }
-      } as FileList;
+      // Import files directly without creating fake FileList
+      // Process each file individually
+      let totalStats: ImportStats = {
+        total: 0,
+        imported: 0,
+        failed: 0,
+        errors: []
+      };
 
-      const stats = await NotesAPI.importNotes(fileList);
+      for (const filePreview of validFiles) {
+        try {
+          const stats = await NotesAPI.importFile(filePreview.file);
+          totalStats.total += stats.total;
+          totalStats.imported += stats.imported;
+          totalStats.failed += stats.failed;
+          totalStats.errors.push(...stats.errors);
+        } catch (error) {
+          totalStats.total += 1;
+          totalStats.failed += 1;
+          totalStats.errors.push(`${filePreview.file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+      }
 
       clearInterval(progressInterval);
       setImportProgress(100);
       
-      setImportStats(stats);
+      setImportStats(totalStats);
 
       if (onImportComplete) {
-        onImportComplete(stats);
+        onImportComplete(totalStats);
       }
 
-      if (stats.failed === 0) {
+      if (totalStats.failed === 0) {
         setTimeout(() => {
           onClose();
         }, 2000);

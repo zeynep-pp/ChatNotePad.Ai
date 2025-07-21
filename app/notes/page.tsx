@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { NoteList } from '../components/notes/NoteList';
 import { SearchBar } from '../components/notes/SearchBar';
@@ -15,7 +15,7 @@ import { UserProfileDropdown } from '../components/auth/UserProfileDropdown';
 import { NotesAPI } from '../lib/notesApi';
 import { Note } from '../types/notes';
 
-export default function NotesPage() {
+function NotesPageContent() {
   const { isDarkMode, toggleTheme } = useTheme();
   const { user, loading, isAuthenticated } = useAuth();
   const searchParams = useSearchParams();
@@ -422,5 +422,20 @@ export default function NotesPage() {
           title="Import Notes"
         />
       </div>
+  );
+}
+
+export default function NotesPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+        </div>
+      </div>
+    }>
+      <NotesPageContent />
+    </Suspense>
   );
 }

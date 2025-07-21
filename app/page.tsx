@@ -496,7 +496,7 @@ function SmartNotePageContent() {
     }
   };
 
-  // Quick export current text as note
+  // Quick export current text as note (client-side export)
   const handleExportCurrentText = async (format: 'markdown' | 'txt' | 'pdf') => {
     if (!originalText.trim() && !editedText.trim()) {
       alert('No text to export. Please write something first.');
@@ -504,20 +504,62 @@ function SmartNotePageContent() {
     }
     
     const content = editedText || originalText;
-    const title = `AI Editor Note - ${new Date().toLocaleDateString()}`;
+    const finalTitle = noteTitle.trim() || `AI Editor Export - ${new Date().toLocaleDateString()}`;
     
     try {
-      // Create a temporary note object for export
-      const tempNote = {
-        id: 'temp',
-        title,
-        content,
-        tags: ['ai-editor-export'],
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
+      if (format === 'pdf') {
+        // PDF export requires backend - first save as note, then export
+        const confirmed = confirm('PDF export requires saving the note first. Do you want to continue?');
+        if (!confirmed) return;
+        
+        // Save note first
+        const tempNote = await NotesAPI.createNote({
+          title: finalTitle,
+          content,
+          tags: ['ai-editor-export', ...userTags],
+          is_favorite: isFavorite
+        });
+        
+        if (tempNote) {
+          // Then export as PDF
+          await NotesAPI.exportSingleNote(tempNote.id, 'pdf');
+          alert(`Successfully exported "${finalTitle}" as PDF`);
+        } else {
+          throw new Error('Failed to create note for PDF export');
+        }
+        return;
+      }
       
-      await handleQuickExport(format, [tempNote]);
+      // Client-side export for markdown and txt
+      const fileExtension = format === 'markdown' ? 'md' : 'txt';
+      const fileName = `${finalTitle.replace(/[^a-zA-Z0-9-_\s]/g, '')}.${fileExtension}`;
+      
+      // Prepare content based on format
+      let exportContent = content;
+      if (format === 'markdown') {
+        // Add title as markdown header
+        exportContent = `# ${finalTitle}\n\n${content}`;
+        
+        // Add metadata if available
+        if (userTags.length > 0) {
+          exportContent += `\n\n---\n**Tags:** ${userTags.join(', ')}`;
+        }
+        exportContent += `\n\n*Exported from ChatNotePad.AI on ${new Date().toLocaleString()}*`;
+      }
+      
+      // Create and download file
+      const blob = new Blob([exportContent], { type: 'text/plain;charset=utf-8' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      alert(`Successfully exported "${finalTitle}" as ${format.toUpperCase()}`);
     } catch (error) {
       console.error('Export current text failed:', error);
       alert('Export failed. Please try again.');

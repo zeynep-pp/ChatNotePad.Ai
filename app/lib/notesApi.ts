@@ -152,6 +152,10 @@ export class NotesAPI {
   }
 
   static async importFile(file: File): Promise<ImportStats> {
+    if (!file || !(file instanceof File)) {
+      throw new Error('Invalid file: Expected a File object');
+    }
+    
     const { AuthAPI } = await import('./auth');
     const token = AuthAPI.getToken();
     
@@ -181,6 +185,10 @@ export class NotesAPI {
   }
 
   static async importNotes(files: FileList): Promise<ImportStats> {
+    if (!files || files.length === 0) {
+      throw new Error('No files provided for import');
+    }
+
     let totalStats: ImportStats = {
       total: 0,
       imported: 0,
@@ -190,8 +198,16 @@ export class NotesAPI {
 
     // Import files one by one since backend expects single file
     for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (!file) {
+        totalStats.total += 1;
+        totalStats.failed += 1;
+        totalStats.errors.push(`File at index ${i} is undefined`);
+        continue;
+      }
+      
       try {
-        const stats = await this.importFile(files[i]);
+        const stats = await this.importFile(file);
         totalStats.total += stats.total;
         totalStats.imported += stats.imported;
         totalStats.failed += stats.failed;
