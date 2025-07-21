@@ -810,7 +810,7 @@ MIT License. See [LICENSE](LICENSE) for details.
 - ⬜ Localization and **multi-language support** (UI & command handling)
 - ⬜ **Plugin system for custom commands**
 - ⬜ **Integration with cloud storage** (e.g., Dropbox, Google Drive)
-- ⬜ **File import/export**
+- ✅ **File import/export**
 - ⬜ **Advanced AI integrations**
 - ⬜ **Context-aware suggestions**
 

@@ -227,6 +227,9 @@ function NotesPageContent() {
     );
   }
 
+  // Başlık ve Sign In butonu için renk değişkeni (sadece light modda mor)
+  const mainColor = isDarkMode ? "text-gray-900 dark:text-white" : "text-purple-700";
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-300 dark:from-gray-900 dark:to-gray-800">
         {/* Header */}
@@ -243,7 +246,7 @@ function NotesPageContent() {
                 AI Editor
               </a>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">ChatNotePad.AI</h1>
+            <h1 className={`text-2xl font-bold tracking-tight ${mainColor}`}>ChatNotePad.AI</h1>
             <div className="flex-1 flex justify-end space-x-3">
               <button
                 onClick={toggleTheme}
@@ -269,7 +272,7 @@ function NotesPageContent() {
           {/* Page Header */}
           <div className="mb-8">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+              <h2 className={`text-3xl font-bold tracking-tight ${mainColor}`}>
                 My Notes
               </h2>
               <div className="text-sm text-gray-600 dark:text-gray-400">
