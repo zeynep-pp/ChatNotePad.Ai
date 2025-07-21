@@ -176,9 +176,13 @@ export const useNotes = () => {
     fetchNotes();
   }, [fetchNotes]);
 
-  // Load initial data - sadece bir kez
+  // Load initial data - only if authenticated
   useEffect(() => {
-    fetchNotes();
+    // Don't fetch notes for guest users
+    const { AuthAPI } = require('../lib/auth');
+    if (AuthAPI.isAuthenticated()) {
+      fetchNotes();
+    }
   }, []); // Boş dependency array
 
   return {
