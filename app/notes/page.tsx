@@ -55,8 +55,9 @@ export default function NotesPage() {
 
   const handleSavePendingNote = async (noteData: any) => {
     try {
-      // Combine ai-generated tag with user tags
-      const allTags = ['ai-generated', ...(noteData.userTags || [])];
+      // Only add ai-generated tag if AI was actually used
+      const baseTags = noteData.userTags || [];
+      const allTags = noteData.hasAIResult ? ['ai-generated', ...baseTags] : baseTags;
       
       const finalTitle = noteData.noteTitle?.trim() || `Note from AI Editor - ${new Date().toLocaleDateString()}`;
       
@@ -80,13 +81,22 @@ export default function NotesPage() {
         return;
       }
 
-      // Combine ai-generated tag with user tags (keep original ai-generated if it was there)
+      // Handle ai-generated tag logic for updates
       const originalTags = noteData.editingNote.tags || [];
-      const hasAiGenerated = originalTags.includes('ai-generated');
+      const hadAiGenerated = originalTags.includes('ai-generated');
       const userTags = noteData.userTags || [];
-      const allTags = hasAiGenerated 
-        ? ['ai-generated', ...userTags.filter(tag => tag !== 'ai-generated')]
-        : userTags;
+      
+      let allTags;
+      if (noteData.hasAIResult) {
+        // New AI processing was done, ensure ai-generated tag is present
+        allTags = ['ai-generated', ...userTags.filter((tag: string) => tag !== 'ai-generated')];
+      } else if (hadAiGenerated) {
+        // No new AI processing, but had ai-generated before - keep it
+        allTags = ['ai-generated', ...userTags.filter((tag: string) => tag !== 'ai-generated')];
+      } else {
+        // No AI processing and didn't have ai-generated before - just user tags
+        allTags = userTags;
+      }
       
       const updateData: any = {
         content: noteData.content,

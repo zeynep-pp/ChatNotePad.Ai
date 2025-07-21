@@ -105,12 +105,19 @@ function SmartNotePageContent() {
     }
   }, []);
 
+  // Track if user has made AI transformations
+  const [hasAIResult, setHasAIResult] = useState(false);
+
   // Sync original text to edited text if no AI result exists
   useEffect(() => {
-    if (originalText && !editedText) {
+    if (!hasAIResult) {
       setEditedText(originalText);
     }
-  }, [originalText, editedText]);
+    // Reset AI result flag when original text is cleared
+    if (!originalText) {
+      setHasAIResult(false);
+    }
+  }, [originalText, hasAIResult]);
 
   const saveHistoryToStorage = (history: CommandHistoryItem[]) => {
     try {
@@ -288,6 +295,7 @@ function SmartNotePageContent() {
       
       if (res.data.result) {
         setEditedText(res.data.result);
+        setHasAIResult(true); // Mark that we now have an AI result
         setRetryCount(0); // Reset retry count on success
         
         // Handle agent info from backend (with backward compatibility)
@@ -383,7 +391,8 @@ function SmartNotePageContent() {
         userTags: userTags,
         editingNote: editingNote, // Include editing note for update
         isFavorite: isFavorite,
-        noteTitle: noteTitle
+        noteTitle: noteTitle,
+        hasAIResult: hasAIResult // Track if AI was actually used
       };
       
       localStorage.setItem('pendingNote', JSON.stringify(noteData));
@@ -411,6 +420,15 @@ function SmartNotePageContent() {
     handleCommandSubmit({ preventDefault: () => {} } as React.FormEvent, transformCommand);
   };
 
+  // Handle manual edits to result text
+  const handleEditedTextChange = (newText: string) => {
+    setEditedText(newText);
+    // If user manually edits the result, mark as having AI result to prevent auto-sync
+    if (newText !== originalText) {
+      setHasAIResult(true);
+    }
+  };
+
   // Export/Import handlers for AI Editor
   const handleQuickExport = async (format: 'markdown' | 'txt' | 'pdf', exportNotes: any[]) => {
     if (!user) {
@@ -435,7 +453,42 @@ function SmartNotePageContent() {
     
     try {
       const stats = await NotesAPI.importNotes(files);
-      alert(`Successfully imported ${stats.imported} of ${stats.total} notes`);
+      
+      if (stats.imported > 0) {
+        // If exactly one note was imported (regardless of how many files were attempted), load it into AI Editor
+        if (stats.imported === 1) {
+          try {
+            // Fetch the latest notes to find the newly imported note
+            const notesResponse = await NotesAPI.getNotes({ page: 1, per_page: stats.imported });
+            if (notesResponse.notes && notesResponse.notes.length > 0) {
+              const importedNote = notesResponse.notes[0]; // Most recent note
+              
+              // Load the imported note into AI Editor
+              setEditingNote(importedNote);
+              setOriginalText(importedNote.content || '');
+              setUserTags(importedNote.tags?.filter((tag: string) => tag !== 'ai-generated') || []);
+              setIsFavorite(importedNote.is_favorite || false);
+              setNoteTitle(importedNote.title || '');
+              setHasAIResult(false); // Reset AI result flag
+              
+              const failedMsg = stats.failed > 0 ? ` (${stats.failed} failed)` : '';
+              alert(`Successfully imported "${importedNote.title}" - now ready for editing!${failedMsg}`);
+            } else {
+              alert(`Successfully imported ${stats.imported} note(s)`);
+            }
+          } catch (fetchError) {
+            console.error('Failed to fetch imported note:', fetchError);
+            alert(`Successfully imported ${stats.imported} note(s), but couldn't load into editor`);
+          }
+        } else {
+          // Multiple notes imported - just show summary and let user go to My Notes
+          const failedMsg = stats.failed > 0 ? `. ${stats.failed} failed.` : '';
+          alert(`Successfully imported ${stats.imported} of ${stats.total} notes${failedMsg} Check My Notes to view them.`);
+        }
+      } else {
+        alert(`Import failed. ${stats.failed} of ${stats.total} files could not be imported.`);
+      }
+      
       fetchNotes(); // Refresh notes
     } catch (error) {
       console.error('Import failed:', error);
@@ -604,7 +657,7 @@ function SmartNotePageContent() {
             onClearError={clearError}
             onDiffScroll={handleDiffScroll}
             onSaveAsNote={handleSaveAsNote}
-            onTextChange={setEditedText}
+            onTextChange={handleEditedTextChange}
             userTags={userTags}
             onTagsChange={setUserTags}
             editingNote={editingNote}

@@ -10,6 +10,11 @@ import {
   TagsResponse 
 } from '../types/notes';
 
+// Helper function to get the correct backend URL
+const getBackendUrl = (endpoint: string) => {
+  return `http://localhost:8000/api/v1${endpoint}`;
+};
+
 export interface ExportRequest {
   note_ids: string[];
   format: 'markdown' | 'txt' | 'pdf';
@@ -82,7 +87,7 @@ export class NotesAPI {
     const { AuthAPI } = await import('./auth');
     const token = AuthAPI.getToken();
     
-    const response = await fetch(`/api/v1/export/${format}/${noteId}`, {
+    const response = await fetch(getBackendUrl(`/export/${format}/${noteId}`), {
       headers: {
         'Authorization': `Bearer ${token}`,
       },
@@ -113,7 +118,7 @@ export class NotesAPI {
     const { AuthAPI } = await import('./auth');
     const token = AuthAPI.getToken();
     
-    const response = await fetch(`/api/v1/export/bulk?format=${format}`, {
+    const response = await fetch(getBackendUrl(`/export/bulk?format=${format}`), {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -153,7 +158,7 @@ export class NotesAPI {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await fetch('/api/v1/import/file', {
+    const response = await fetch(getBackendUrl('/import/file'), {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -226,7 +231,7 @@ export class NotesAPI {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await fetch('/api/v1/import/validate', {
+    const response = await fetch(getBackendUrl('/import/validate'), {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
