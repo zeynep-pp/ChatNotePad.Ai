@@ -9,6 +9,7 @@ interface TextEditorProps {
   value: string;
   onChange: (value: string) => void;
   onScroll?: (scrollTop: number) => void;
+  onCursorChange?: (position: number) => void;
   isDarkMode: boolean;
 }
 
@@ -16,6 +17,7 @@ const TextEditor = forwardRef<HTMLDivElement, TextEditorProps>(({
   value, 
   onChange, 
   onScroll, 
+  onCursorChange,
   isDarkMode 
 }, ref) => {
   const monacoRef = useRef<any>(null);
@@ -91,6 +93,17 @@ const TextEditor = forwardRef<HTMLDivElement, TextEditorProps>(({
           onMount={(editor, monaco) => {
             monacoRef.current = monaco;
             editorRef.current = editor;
+            
+            // Add cursor position change listener
+            if (onCursorChange) {
+              editor.onDidChangeCursorPosition((e) => {
+                const model = editor.getModel();
+                if (model) {
+                  const position = model.getOffsetAt(e.position);
+                  onCursorChange(position);
+                }
+              });
+            }
             if (isDarkMode) {
               monaco.editor.defineTheme('custom-dark-blue', {
                 base: 'vs-dark',

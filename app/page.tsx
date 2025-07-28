@@ -6,20 +6,26 @@ import { ErrorState, CommandHistoryItem, AgentInfo } from './types';
 import TextEditor from './components/TextEditor';
 import ResultsPanel from './components/ResultsPanel';
 import ChatInterface from './components/ChatInterface';
-import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { UserProfileDropdown } from './components/auth/UserProfileDropdown';
 import { ImportButton } from './components/notes/ImportButton';
-import { ExportDropdown } from './components/notes/ExportDropdown';
 import { AuthAPI } from './lib/auth';
 import { NotesAPI } from './lib/notesApi';
 import { useTheme } from './contexts/ThemeContext';
 import { useAuth } from './contexts/AuthContext';
 import { useNotes } from './hooks/useNotes';
 
+// Import new advanced components
+import VersionIndicator from './components/VersionIndicator';
+import SuggestionDropdown from './components/SuggestionDropdown';
+import VersionTimeline from './components/VersionTimeline';
+import DiffViewer from './components/DiffViewer';
+import TranslationModal from './components/TranslationModal';
+import AIAssistantButton from './components/AIAssistantButton';
+
 function SmartNotePageContent() {
   const { isDarkMode, toggleTheme } = useTheme();
-  const { user, isAuthenticated } = useAuth();
-  const { notes, fetchNotes } = useNotes();
+  const { user } = useAuth();
+  const { fetchNotes } = useNotes();
   const [originalText, setOriginalText] = useState("");
   const [command, setCommand] = useState("");
   const [editedText, setEditedText] = useState("");
@@ -51,11 +57,38 @@ function SmartNotePageContent() {
   const [loadingProgress, setLoadingProgress] = useState(0);
   
   // Diff syncing state
-  const [editorScrollTop, setEditorScrollTop] = useState(0);
   const [diffScrollTop, setDiffScrollTop] = useState(0);
   
   // Agent feedback state
   const [currentAgentInfo, setCurrentAgentInfo] = useState<AgentInfo | null>(null);
+
+  // New advanced features state
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [showSuggestionDropdown, setShowSuggestionDropdown] = useState(false);
+  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(0);
+  const [cursorPosition, setCursorPosition] = useState(0);
+  const [suggestionPosition, setSuggestionPosition] = useState({ x: 0, y: 0 });
+  
+  // Version management state
+  const [currentVersion, setCurrentVersion] = useState(1);
+  const [totalVersions, setTotalVersions] = useState(1);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showVersionTimeline, setShowVersionTimeline] = useState(false);
+  const [showDiffViewer, setShowDiffViewer] = useState(false);
+  const [diffMode, setDiffMode] = useState<'inline' | 'side-by-side'>('side-by-side');
+  const [compareVersions, setCompareVersions] = useState({ 
+    v1Uuid: '550e8400-e29b-41d4-a716-446655440000', 
+    v2Uuid: '550e8400-e29b-41d4-a716-446655440001' 
+  });
+  
+  // Auto-save state
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
+  const [autoSaveInterval, setAutoSaveInterval] = useState(30000); // 30 seconds
+  const [lastAutoSave, setLastAutoSave] = useState<Date | null>(null);
+  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Translation state
+  const [showTranslationModal, setShowTranslationModal] = useState(false);
   
   const commandSuggestions = [
     "Remove all ',' characters",
@@ -108,6 +141,86 @@ function SmartNotePageContent() {
   // Track if user has made AI transformations
   const [hasAIResult, setHasAIResult] = useState(false);
 
+  // Advanced features handlers
+  const handleVersionSelect = async (versionId: string) => {
+    console.log('Selected version:', versionId);
+  };
+
+  const handleVersionRestore = async (versionId: string) => {
+    if (!editingNote) return;
+    
+    try {
+      const response = await axios.post(`/api/v1/notes/${editingNote.id}/restore/${versionId}`);
+      
+      if (response.status === 200) {
+        // Fetch the updated note to get the restored content
+        const noteResponse = await axios.get(`/api/v1/notes/${editingNote.id}`);
+        if (noteResponse.data) {
+          setOriginalText(noteResponse.data.content);
+          // Update the current version count
+          setTotalVersions(prev => prev + 1);
+          setCurrentVersion(totalVersions + 1);
+          setShowVersionTimeline(false);
+          // Show success message
+          alert('Version restored successfully!');
+        }
+      }
+    } catch (error) {
+      console.error('Version restore failed:', error);
+      alert('Failed to restore version. Please try again.');
+    }
+  };
+
+  const createAutoSaveVersion = async () => {
+    if (!editingNote || !hasUnsavedChanges || !autoSaveEnabled) {
+      return;
+    }
+    
+    try {
+      // Update note content first
+      await axios.put(`/api/v1/notes/${editingNote.id}`, {
+        content: editedText,
+        title: noteTitle || editingNote.title
+      });
+      
+      // Then create version
+      await axios.post(`/api/v1/notes/${editingNote.id}/versions`, {
+        change_description: 'Auto-save'
+      });
+      setTotalVersions(prev => prev + 1);
+      setCurrentVersion(prev => prev + 1);
+      setLastAutoSave(new Date());
+      setHasUnsavedChanges(false);
+      console.log('💾 Auto-save completed at', new Date().toLocaleTimeString());
+    } catch (error) {
+      console.error('Auto-save failed:', error);
+    }
+  };
+
+  const handleTranslationResult = (translatedText: string, targetLang: string) => {
+    setEditedText(translatedText);
+    setHasAIResult(true);
+  };
+
+  const handleAISuggestion = (suggestion: string) => {
+    setEditedText(suggestion);
+    setHasAIResult(true);
+  };
+
+  const handleSuggestionSelect = (suggestionText: string) => {
+    const textBefore = originalText.substring(0, cursorPosition);
+    const textAfter = originalText.substring(cursorPosition);
+    const newText = textBefore + suggestionText + textAfter;
+    
+    setOriginalText(newText);
+    setShowSuggestionDropdown(false);
+    setCursorPosition(cursorPosition + suggestionText.length);
+  };
+
+  const handleSuggestionClose = () => {
+    setShowSuggestionDropdown(false);
+  };
+
   // Sync original text to edited text if no AI result exists
   useEffect(() => {
     if (!hasAIResult) {
@@ -118,6 +231,98 @@ function SmartNotePageContent() {
       setHasAIResult(false);
     }
   }, [originalText, hasAIResult]);
+
+  // Track unsaved changes
+  useEffect(() => {
+    setHasUnsavedChanges(originalText !== editedText && hasAIResult);
+  }, [originalText, editedText, hasAIResult]);
+
+  // Auto-save functionality with debounced timer
+  useEffect(() => {
+    if (!autoSaveEnabled || !hasUnsavedChanges || !editingNote) {
+      return;
+    }
+
+    // Clear existing timeout
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+
+    // Set new timeout for auto-save
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      createAutoSaveVersion();
+    }, autoSaveInterval);
+
+    // Cleanup function
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
+  }, [hasUnsavedChanges, editingNote, autoSaveEnabled, autoSaveInterval]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (showSuggestionDropdown) {
+        switch (e.key) {
+          case 'ArrowUp':
+            e.preventDefault();
+            setSelectedSuggestionIndex(prev => 
+              prev > 0 ? prev - 1 : suggestions.length - 1
+            );
+            break;
+          case 'ArrowDown':
+            e.preventDefault();
+            setSelectedSuggestionIndex(prev => 
+              prev < suggestions.length - 1 ? prev + 1 : 0
+            );
+            break;
+          case 'Enter':
+            e.preventDefault();
+            if (suggestions[selectedSuggestionIndex]) {
+              handleSuggestionSelect(suggestions[selectedSuggestionIndex].text);
+            }
+            break;
+          case 'Escape':
+            e.preventDefault();
+            handleSuggestionClose();
+            break;
+        }
+      } else {
+        // Global shortcuts
+        if (e.ctrlKey || e.metaKey) {
+          switch (e.key) {
+            case 'h':
+              e.preventDefault();
+              setShowHistory(!showHistory);
+              break;
+            case 't':
+              if (e.shiftKey) {
+                e.preventDefault();
+                setShowTranslationModal(true);
+              }
+              break;
+            case 'k':
+              if (e.shiftKey) {
+                e.preventDefault();
+                setShowVersionTimeline(!showVersionTimeline);
+              }
+              break;
+            case 'd':
+              if (e.shiftKey) {
+                e.preventDefault();
+                setShowDiffViewer(!showDiffViewer);
+              }
+              break;
+          }
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [showSuggestionDropdown, selectedSuggestionIndex, suggestions, showHistory, showVersionTimeline, showDiffViewer]);
 
   const saveHistoryToStorage = (history: CommandHistoryItem[]) => {
     try {
@@ -496,7 +701,7 @@ function SmartNotePageContent() {
     }
   };
 
-  // Quick export current text as note (client-side export)
+  // Quick export current text as note (client-side export)  
   const handleExportCurrentText = async (format: 'markdown' | 'txt' | 'pdf') => {
     if (!originalText.trim() && !editedText.trim()) {
       alert('No text to export. Please write something first.');
@@ -568,7 +773,6 @@ function SmartNotePageContent() {
 
   // Diff syncing functions
   const handleEditorScroll = (scrollTop: number) => {
-    setEditorScrollTop(scrollTop);
     // Sync diff viewer scroll with a slight delay to avoid conflicts
     if (diffViewerRef.current) {
       setTimeout(() => {
@@ -587,8 +791,6 @@ function SmartNotePageContent() {
     }
   };
 
-  // Başlık rengi sadece light modda mor olacak şekilde ayarlanıyor
-  const titleColor = isDarkMode ? "text-gray-900 dark:text-white" : "text-fuchsia-700";
   // Başlık ve Sign In butonu için renk değişkeni (sadece light modda mor)
   const mainColor = isDarkMode ? "text-gray-900 dark:text-white" : "text-purple-700";
   const signInBtnColor = isDarkMode ? "bg-blue-600 hover:bg-blue-700 text-white" : "bg-white text-purple-700 border border-purple-700 hover:bg-purple-50";
@@ -599,7 +801,150 @@ function SmartNotePageContent() {
         <header className="w-full py-6 px-4 flex flex-col bg-white/80 dark:bg-gray-900/80 shadow-md">
           <div className="w-full flex items-center mb-2">
             <h1 className={`text-2xl font-bold tracking-tight ${mainColor}`}>ChatNotePad.AI</h1>
+            
+            {/* Version Indicator (only show when editing a note) */}
+            {editingNote && (
+              <div className="ml-4">
+                <VersionIndicator
+                  currentVersion={currentVersion}
+                  totalVersions={totalVersions}
+                  hasUnsavedChanges={hasUnsavedChanges}
+                  autoSaveEnabled={autoSaveEnabled}
+                  lastAutoSave={lastAutoSave}
+                  onVersionTimelineClick={() => setShowVersionTimeline(true)}
+                />
+              </div>
+            )}
+            
             <div className="flex-1 flex justify-end space-x-3">
+              {/* AI Assistant Button */}
+              <AIAssistantButton
+                currentText={originalText}
+                cursorPosition={cursorPosition}
+                onSuggestion={handleAISuggestion}
+                onTranslate={() => setShowTranslationModal(true)}
+                disabled={!originalText.trim()}
+              />
+              
+              {/* Auth Status Debug */}
+              <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
+                {user ? (
+                  <span className="text-green-600 dark:text-green-400">✓ Authenticated</span>
+                ) : (
+                  <span className="text-yellow-600 dark:text-yellow-400">⚠ Guest Mode</span>
+                )}
+              </div>
+
+              {/* Quick Test Buttons for Advanced Features */}
+              <div className="flex items-center space-x-2 border-l border-gray-300 dark:border-gray-600 pl-3">
+                <button
+                  onClick={async () => {
+                    if (!editingNote) {
+                      alert('No note selected for versioning');
+                      return;
+                    }
+                    const description = prompt('Version description (optional):', 'Manual save point');
+                    if (description !== null) {
+                      try {
+                        // Update note content first
+                        await axios.put(`/api/v1/notes/${editingNote.id}`, {
+                          content: editedText,
+                          title: noteTitle || editingNote.title
+                        });
+                        
+                        // Then create version
+                        await axios.post(`/api/v1/notes/${editingNote.id}/versions`, {
+                          change_description: description || 'Manual save point'
+                        });
+                        setTotalVersions(prev => prev + 1);
+                        setCurrentVersion(prev => prev + 1);
+                        setHasUnsavedChanges(false);
+                        alert('✅ New version created successfully!');
+                      } catch (error) {
+                        console.error('Version creation failed:', error);
+                        alert('❌ Failed to create version');
+                      }
+                    }
+                  }}
+                  disabled={!editingNote}
+                  className="px-2 py-1 text-xs bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded hover:bg-green-200 dark:hover:bg-green-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Create New Version"
+                >
+                  💾 Save Ver.
+                </button>
+                <div className="relative flex items-center space-x-1">
+                  <button
+                    onClick={() => setAutoSaveEnabled(!autoSaveEnabled)}
+                    className={`px-2 py-1 text-xs rounded-l transition-colors ${
+                      autoSaveEnabled 
+                        ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800' 
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
+                    }`}
+                    title={`Auto-save ${autoSaveEnabled ? 'enabled' : 'disabled'} (${autoSaveInterval/1000}s interval)${lastAutoSave ? ` - Last: ${lastAutoSave.toLocaleTimeString()}` : ''}`}
+                  >
+                    🔄 Auto {autoSaveEnabled ? 'ON' : 'OFF'}
+                  </button>
+                  <select
+                    value={autoSaveInterval}
+                    onChange={(e) => setAutoSaveInterval(Number(e.target.value))}
+                    disabled={!autoSaveEnabled}
+                    className={`px-1 py-1 text-xs rounded-r border-l border-gray-300 dark:border-gray-600 transition-colors ${
+                      autoSaveEnabled 
+                        ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300' 
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                    } disabled:opacity-50`}
+                    title="Auto-save interval"
+                  >
+                    <option value={10000}>10s</option>
+                    <option value={30000}>30s</option>
+                    <option value={60000}>1m</option>
+                    <option value={300000}>5m</option>
+                  </select>
+                </div>
+                <button
+                  onClick={() => setShowVersionTimeline(true)}
+                  className="px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+                  title="Version Timeline (Ctrl+Shift+K)"
+                >
+                  Versions
+                </button>
+                <button
+                  onClick={() => setShowDiffViewer(true)}
+                  disabled={!editingNote}
+                  className="px-2 py-1 text-xs bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded hover:bg-green-200 dark:hover:bg-green-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Diff Viewer (Ctrl+Shift+D)"
+                >
+                  Diff
+                </button>
+                <button
+                  onClick={() => setShowTranslationModal(true)}
+                  disabled={!originalText.trim()}
+                  className="px-2 py-1 text-xs bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 rounded hover:bg-purple-200 dark:hover:bg-purple-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Translate (Ctrl+Shift+T)"
+                >
+                  Translate
+                </button>
+                <button
+                  onClick={() => {
+                    // Simulate suggestions for testing
+                    const mockSuggestions = [
+                      { id: '1', text: 'Improve this sentence structure', type: 'style', confidence: 0.9, description: 'Enhance readability' },
+                      { id: '2', text: 'Add more details here', type: 'content', confidence: 0.8, description: 'Expand content' },
+                      { id: '3', text: 'Make this more formal', type: 'style', confidence: 0.85, description: 'Professional tone' }
+                    ];
+                    setSuggestions(mockSuggestions);
+                    setSelectedSuggestionIndex(0);
+                    setSuggestionPosition({ x: 400, y: 200 });
+                    setShowSuggestionDropdown(true);
+                  }}
+                  disabled={!originalText.trim()}
+                  className="px-2 py-1 text-xs bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300 rounded hover:bg-orange-200 dark:hover:bg-orange-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Test AI Suggestions"
+                >
+                  Suggestions
+                </button>
+              </div>
+              
               <button
                 onClick={toggleTheme}
                 className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-200"
@@ -681,6 +1026,7 @@ function SmartNotePageContent() {
             value={originalText}
             onChange={setOriginalText}
             onScroll={handleEditorScroll}
+            onCursorChange={setCursorPosition}
             isDarkMode={isDarkMode}
           />
 
@@ -711,6 +1057,65 @@ function SmartNotePageContent() {
           />
         </div>
       </main>
+
+      {/* Advanced Features Components */}
+      
+      {/* AI Suggestion Dropdown */}
+      <SuggestionDropdown
+        isVisible={showSuggestionDropdown}
+        suggestions={suggestions}
+        selectedIndex={selectedSuggestionIndex}
+        onSelect={handleSuggestionSelect}
+        onClose={handleSuggestionClose}
+        position={suggestionPosition}
+      />
+
+      {/* Version Timeline */}
+      {editingNote && (
+        <VersionTimeline
+          noteId={editingNote.id}
+          onVersionSelect={handleVersionSelect}
+          onRestoreVersion={handleVersionRestore}
+          isOpen={showVersionTimeline}
+          onClose={() => setShowVersionTimeline(false)}
+        />
+      )}
+
+      {/* Diff Viewer */}
+      {showDiffViewer && editingNote && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-6xl max-h-[90vh] overflow-hidden">
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Version Comparison</h2>
+              <button
+                onClick={() => setShowDiffViewer(false)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-4">
+              <DiffViewer
+                noteId={editingNote.id}
+                version1Uuid={compareVersions.v1Uuid}
+                version2Uuid={compareVersions.v2Uuid}
+                mode={diffMode}
+                onModeChange={setDiffMode}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Translation Modal */}
+      <TranslationModal
+        isOpen={showTranslationModal}
+        onClose={() => setShowTranslationModal(false)}
+        sourceText={originalText}
+        onTranslated={handleTranslationResult}
+      />
 
       {/* Chat Interface */}
       <ChatInterface

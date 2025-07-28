@@ -2,9 +2,15 @@ import axios from 'axios';
 import { AuthAPI } from './auth';
 
 export const setupAxiosInterceptors = () => {
+  // Set base URL for all axios requests
+  const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  axios.defaults.baseURL = baseURL;
+  console.log('🌐 Axios Base URL set to:', baseURL);
+  
   axios.interceptors.request.use(
     (config) => {
       const token = AuthAPI.getToken();
+      console.log('🔑 Axios Request - Token:', token ? 'Present' : 'Missing', 'URL:', config.url);
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }

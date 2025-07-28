@@ -174,6 +174,22 @@ function AuthPageContent() {
           />
         )}
         
+        {/* Guest Mode Link */}
+        <div className="mt-6 text-center">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+            Don't want to sign up right now?
+          </p>
+          <a
+            href="/"
+            className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium underline transition-colors"
+          >
+            Continue as Guest
+          </a>
+          <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+            Limited features available without an account
+          </p>
+        </div>
+        
         <EmailVerificationModal
           isOpen={showEmailVerificationModal}
           onClose={() => setShowEmailVerificationModal(false)}
