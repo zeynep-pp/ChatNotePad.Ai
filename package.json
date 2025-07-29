@@ -1,0 +1,49 @@
+{
+  "name": "chatnotepd-ai",
+  "version": "1.0.0",
+  "description": "AI-powered note editing and transformation with natural language commands.",
+  "main": "index.js",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "vercel-build": "pnpm install --no-frozen-lockfile && next build"
+  },
+  "keywords": [
+    "ai",
+    "notepad",
+    "text-editor",
+    "natural-language",
+    "text-processing",
+    "nextjs",
+    "react"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@hookform/resolvers": "^5.1.1",
+    "@monaco-editor/react": "^4.7.0",
+    "@supabase/supabase-js": "^2.51.0",
+    "axios": "^1.10.0",
+    "classnames": "^2.5.1",
+    "js-cookie": "^3.0.5",
+    "next": "15.3.4",
+    "react": "^18.0.0",
+    "react-diff-viewer": "^3.1.1",
+    "react-dom": "^18.0.0",
+    "react-hook-form": "^7.60.0",
+    "yup": "^1.6.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.11",
+    "@types/js-cookie": "^3.0.6",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "autoprefixer": "^10.4.21",
+    "jiti": "^2.4.2",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.11",
+    "typescript": "^5"
+  },
+  "packageManager": "pnpm@8.15.7+sha512.c85cd21b6da10332156b1ca2aa79c0a61ee7ad2eb0453b88ab299289e9e8ca93e6091232b25c07cbf61f6df77128d9c849e5c9ac6e44854dbd211c49f3a67adc"
+}
