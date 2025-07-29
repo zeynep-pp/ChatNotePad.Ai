@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, Suspense } from "react";
-import axios from "axios";
+import apiClient from "./lib/apiClient";
 import { ErrorState, CommandHistoryItem, AgentInfo } from './types';
 import TextEditor from './components/TextEditor';
 import ResultsPanel from './components/ResultsPanel';
@@ -135,7 +135,7 @@ function SmartNotePageContent() {
         // Fetch version information for existing note
         const fetchVersionInfo = async () => {
           try {
-            const response = await axios.get(`/api/v1/notes/${noteData.id}/versions`);
+            const response = await apiClient.get(`/api/v1/notes/${noteData.id}/versions`);
             console.log('API Response:', response.data); // Debug log
             
             // Use the total field if available, otherwise count versions array
@@ -171,11 +171,11 @@ function SmartNotePageContent() {
     if (!editingNote) return;
     
     try {
-      const response = await axios.post(`/api/v1/notes/${editingNote.id}/restore/${versionId}`);
+      const response = await apiClient.post(`/api/v1/notes/${editingNote.id}/restore/${versionId}`);
       
       if (response.status === 200) {
         // Fetch the updated note to get the restored content
-        const noteResponse = await axios.get(`/api/v1/notes/${editingNote.id}`);
+        const noteResponse = await apiClient.get(`/api/v1/notes/${editingNote.id}`);
         if (noteResponse.data) {
           setOriginalText(noteResponse.data.content);
           // Update the current version count
@@ -199,13 +199,13 @@ function SmartNotePageContent() {
     
     try {
       // Update note content first
-      await axios.put(`/api/v1/notes/${editingNote.id}`, {
+      await apiClient.put(`/api/v1/notes/${editingNote.id}`, {
         content: editedText,
         title: noteTitle || editingNote.title
       });
       
       // Then create version
-      await axios.post(`/api/v1/notes/${editingNote.id}/versions`, {
+      await apiClient.post(`/api/v1/notes/${editingNote.id}/versions`, {
         change_description: 'Auto-save'
       });
       setTotalVersions(prev => prev + 1);
@@ -503,13 +503,14 @@ function SmartNotePageContent() {
                               currentCommand.toLowerCase().includes('conversational') ||
                               currentCommand.toLowerCase().includes('confident');
       
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
       const endpoint = isSummarization ? 
-        "http://localhost:8000/summarize" : 
+        `${baseUrl}/summarize` : 
         isTransformation ?
-        "http://localhost:8000/api/v1/transform" :
-        "http://localhost:8000/prompt";
+        `${baseUrl}/api/v1/transform` :
+        `${baseUrl}/prompt`;
       
-      const res = await axios.post(endpoint, {
+      const res = await apiClient.post(endpoint, {
         text: originalText,
         command: currentCommand,
       }, {
@@ -870,13 +871,13 @@ function SmartNotePageContent() {
                     if (description !== null) {
                       try {
                         // Update note content first
-                        await axios.put(`/api/v1/notes/${editingNote.id}`, {
+                        await apiClient.put(`/api/v1/notes/${editingNote.id}`, {
                           content: editedText,
                           title: noteTitle || editingNote.title
                         });
                         
                         // Then create version
-                        await axios.post(`/api/v1/notes/${editingNote.id}/versions`, {
+                        await apiClient.post(`/api/v1/notes/${editingNote.id}/versions`, {
                           change_description: description || 'Manual save point'
                         });
                         setTotalVersions(prev => prev + 1);

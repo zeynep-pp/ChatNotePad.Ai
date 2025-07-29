@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import apiClient from '../lib/apiClient';
 
 interface Version {
   id: string;
@@ -59,7 +59,7 @@ export default function VersionTimeline({
     
     setLoading(true);
     try {
-      const response = await axios.get(`/api/v1/notes/${noteId}/versions`);
+      const response = await apiClient.get(`/api/v1/notes/${noteId}/versions`);
       console.log('Version Timeline API Response:', response.data); // Debug log
       
       // The API returns { versions: [...], total: 13, note_id: "..." }

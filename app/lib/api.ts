@@ -5,7 +5,7 @@ class ApiClient {
   private client: AxiosInstance;
   private baseURL: string;
 
-  constructor(baseURL: string = 'http://localhost:8000/api/v1') {
+  constructor(baseURL: string = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1`) {
     this.baseURL = baseURL;
     this.client = axios.create({
       baseURL,
@@ -31,9 +31,12 @@ class ApiClient {
 
         if (AuthAPI.isAuthenticated()) {
           const token = AuthAPI.getToken();
+          console.log('🔑 API Client Token exists:', !!token);
           if (token) {
             config.headers.Authorization = `Bearer ${token}`;
           }
+        } else {
+          console.log('⚠️ API Client: User not authenticated');
         }
         return config;
       },

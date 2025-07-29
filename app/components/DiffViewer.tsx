@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import ReactDiffViewer, { DiffMethod } from 'react-diff-viewer';
-import axios from 'axios';
+import apiClient from '../lib/apiClient';
 
 interface DiffViewerProps {
   noteId: string;
@@ -47,7 +47,7 @@ export default function DiffViewer({
     
     try {
       // First try to get the versions list to get real UUIDs
-      const versionsListResponse = await axios.get(`/api/v1/notes/${noteId}/versions`);
+      const versionsListResponse = await apiClient.get(`/api/v1/notes/${noteId}/versions`);
       const versions = versionsListResponse.data.versions || [];
       
       console.log('📝 Versions list response:', {
@@ -73,8 +73,8 @@ export default function DiffViewer({
         
         // Otherwise fetch individual versions
         const [v1Response, v2Response] = await Promise.all([
-          axios.get(`/api/v1/notes/${noteId}/versions/${v1.id}`),
-          axios.get(`/api/v1/notes/${noteId}/versions/${v2.id}`)
+          apiClient.get(`/api/v1/notes/${noteId}/versions/${v1.id}`),
+          apiClient.get(`/api/v1/notes/${noteId}/versions/${v2.id}`)
         ]);
 
         console.log('🔍 Version API responses:', { 
