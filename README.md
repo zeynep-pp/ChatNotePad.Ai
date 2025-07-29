@@ -1,5 +1,7 @@
 # ChatNotePad.Ai
 
+[🔗 Live Demo (Vercel)](https://chat-note-pad-ai.vercel.app/)
+
 ChatNotePad.Ai is a modern, AI-powered note-taking application that allows users to edit and transform their notes using natural language commands. The application features a clean, responsive UI with live diff visualization and supports both text editing and summarization capabilities.
 
 ## 🔗 Backend Integration
