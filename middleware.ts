@@ -28,7 +28,7 @@ export function middleware(request: NextRequest) {
       'Content-Security-Policy',
       [
         "default-src 'self'",
-        "script-src 'self' 'unsafe-inline' https://vercel.live", // Allow Next.js inline scripts and Vercel
+        "script-src 'self' 'unsafe-inline' https://vercel.live https://cdn.jsdelivr.net", // Allow Next.js inline scripts, Vercel and Monaco CDN
         "style-src 'self' 'unsafe-inline'",
         "font-src 'self' data:",
         "img-src 'self' data: blob:",
