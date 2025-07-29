@@ -71,6 +71,8 @@ export default function VersionTimeline({
       const mockVersions: Version[] = [
         {
           id: '550e8400-e29b-41d4-a716-446655440000',
+          note_id: noteId,
+          user_id: 'mock-user',
           version_number: 3,
           content: 'Latest version content...',
           change_description: 'Added new sections',
@@ -79,7 +81,9 @@ export default function VersionTimeline({
           checksum: 'abc123'
         },
         {
-          id: '550e8400-e29b-41d4-a716-446655440001', 
+          id: '550e8400-e29b-41d4-a716-446655440001',
+          note_id: noteId,
+          user_id: 'mock-user', 
           version_number: 2,
           content: 'Previous version content...',
           change_description: 'Fixed typos',
@@ -89,6 +93,8 @@ export default function VersionTimeline({
         },
         {
           id: '550e8400-e29b-41d4-a716-446655440002',
+          note_id: noteId,
+          user_id: 'mock-user',
           version_number: 1,
           content: 'Original version content...',
           change_description: 'Initial version',

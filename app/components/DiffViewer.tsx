@@ -52,7 +52,7 @@ export default function DiffViewer({
       
       console.log('📝 Versions list response:', {
         totalVersions: versions.length,
-        versions: versions.map(v => ({ id: v.id, version_number: v.version_number, content_preview: v.content?.substring(0, 50) }))
+        versions: versions.map((v: any) => ({ id: v.id, version_number: v.version_number, content_preview: v.content?.substring(0, 50) }))
       });
       
       if (versions.length >= 2) {

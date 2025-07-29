@@ -27,7 +27,7 @@ class ApiClient {
         }
 
         // Debug logging for URL issues
-        console.log('API Request URL:', config.baseURL + config.url);
+        console.log('API Request URL:', (config.baseURL || '') + config.url);
 
         if (AuthAPI.isAuthenticated()) {
           const token = AuthAPI.getToken();
