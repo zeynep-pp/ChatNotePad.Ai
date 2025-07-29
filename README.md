@@ -805,18 +805,21 @@ MIT License. See [LICENSE](LICENSE) for details.
   - Import statistics with success/error reporting
   - API integration with `/api/v1/export/*` and `/api/v1/import/*` endpoints
   - Proper error handling and user feedback throughout
-- ⬜ Version history and undo functionality (client-side)
+- ✅ Version history and undo functionality (client-side)
 - ⬜ **Real-time collaboration** UI support
-- ⬜ Localization and **multi-language support** (UI & command handling)
-- ⬜ **Plugin system for custom commands**
-- ⬜ **Integration with cloud storage** (e.g., Dropbox, Google Drive)
+- ✅ Localization and **multi-language support** (UI & command handling)
+- ✅ **Plugin system for custom commands**
+- ✅ **Integration with cloud storage** (e.g., Dropbox, Google Drive)
 - ✅ **File import/export**
-- ⬜ **Advanced AI integrations**
-- ⬜ **Context-aware suggestions**
+- ✅ **Advanced AI integrations**
+- ✅ **Context-aware suggestions**
+- ✅ **CORS configuration for Railway/Vercel deployment**
+- ✅ **Environment variable configuration for production**
+- ✅ **API base URL configuration with Railway backend**
 
 ---
 
 ### 💡 Future Ideas
 - ⬜ Plugin-based command system for power users
 - ⬜ User-specific theme and settings
-- ⬜ Integration with cloud storage (e.g., Dropbox, Google Drive)
+- ✅  Integration with cloud storage (e.g., Dropbox, Google Drive)
