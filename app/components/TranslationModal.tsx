@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { useTranslation } from '../hooks/useTranslation';
+import apiClient from '../lib/api';
 
 interface Language {
   code: string;
@@ -51,11 +52,10 @@ export default function TranslationModal({
   const [sourceLang, setSourceLang] = useState('auto');
   const [targetLang, setTargetLang] = useState('en');
   const [translatedText, setTranslatedText] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [detectedLanguage, setDetectedLanguage] = useState<string | null>(null);
   const [recentLanguages, setRecentLanguages] = useState<string[]>([]);
   const [languageSearch, setLanguageSearch] = useState('');
+  const { translateText, isTranslating, error, rateLimitInfo } = useTranslation();
 
   useEffect(() => {
     // Load recent languages from localStorage
@@ -69,22 +69,21 @@ export default function TranslationModal({
     }
   }, []);
 
-  useEffect(() => {
-    if (isOpen && sourceText) {
-      // Auto-detect language when modal opens
-      detectLanguage();
-    }
-  }, [isOpen, sourceText]);
+  // Temporarily disable auto-detection to avoid errors
+  // useEffect(() => {
+  //   if (isOpen && sourceText) {
+  //     // Auto-detect language when modal opens
+  //     detectLanguage();
+  //   }
+  // }, [isOpen, sourceText]);
 
   const detectLanguage = async () => {
     try {
-      const response = await axios.post('/api/v1/ai/detect-language', {
-        text: sourceText
-      });
+      const response = await apiClient.get<{language: string}>(`/api/v1/ai/detect-language?text=${encodeURIComponent(sourceText)}`);
 
-      setDetectedLanguage(response.data.language);
-      if (response.data.language !== 'en') {
-        setSourceLang(response.data.language);
+      setDetectedLanguage(response.language);
+      if (response.language !== 'en') {
+        setSourceLang(response.language);
       }
     } catch (error) {
       console.error('Language detection failed:', error);
@@ -93,28 +92,21 @@ export default function TranslationModal({
 
   const handleTranslate = async () => {
     if (!sourceText.trim() || !targetLang) return;
+    
+    const result = await translateText({
+      text: sourceText,
+      source_language: sourceLang === 'auto' ? undefined : sourceLang,
+      target_language: targetLang,
+    });
 
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await axios.post('/api/v1/ai/translate', {
-        text: sourceText,
-        source_language: sourceLang === 'auto' ? null : sourceLang,
-        target_language: targetLang,
-      });
-
-      setTranslatedText(response.data.translated_text);
-
+    if (result) {
+      setTranslatedText(result.translated_text);
+      setDetectedLanguage(result.source_language);
+      
       // Update recent languages
       const updated = [targetLang, ...recentLanguages.filter(lang => lang !== targetLang)].slice(0, 5);
       setRecentLanguages(updated);
       localStorage.setItem('recentTranslationLanguages', JSON.stringify(updated));
-
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Translation failed');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -299,7 +291,7 @@ export default function TranslationModal({
                 )}
               </div>
               <div className="h-full bg-gray-50 dark:bg-gray-700 rounded-lg p-3 overflow-y-auto">
-                {loading ? (
+                {isTranslating ? (
                   <div className="flex items-center justify-center h-full">
                     <div className="text-center">
                       <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto mb-2"></div>
@@ -308,11 +300,34 @@ export default function TranslationModal({
                   </div>
                 ) : error ? (
                   <div className="flex items-center justify-center h-full">
-                    <div className="text-center text-red-600 dark:text-red-400">
-                      <svg className="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                      </svg>
-                      <p className="text-xs">{error}</p>
+                    <div className="text-center">
+                      <div className="text-red-600 dark:text-red-400 mb-3">
+                        <svg className="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                        </svg>
+                        <p className="text-xs font-medium">Translation Error</p>
+                        <p className="text-xs mt-1">{error}</p>
+                      </div>
+                      
+                      {/* Rate limit info */}
+                      {rateLimitInfo && (
+                        <div className="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg text-xs">
+                          <div className="flex items-center justify-center gap-1 text-yellow-700 dark:text-yellow-300 mb-1">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span className="font-medium">Rate Limit Exceeded</span>
+                          </div>
+                          <p className="text-yellow-600 dark:text-yellow-400">
+                            Remaining requests: {rateLimitInfo.remaining}
+                          </p>
+                          {rateLimitInfo.resetTime && (
+                            <p className="text-yellow-600 dark:text-yellow-400">
+                              Resets at: {new Date(rateLimitInfo.resetTime).toLocaleTimeString()}
+                            </p>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ) : translatedText ? (
@@ -337,10 +352,10 @@ export default function TranslationModal({
             <div className="flex items-center space-x-3">
               <button
                 onClick={handleTranslate}
-                disabled={loading || !sourceText.trim()}
+                disabled={isTranslating || !sourceText.trim()}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {loading ? 'Translating...' : 'Translate'}
+                {isTranslating ? 'Translating...' : 'Translate'}
               </button>
             </div>
 

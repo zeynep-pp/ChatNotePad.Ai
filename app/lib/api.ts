@@ -15,9 +15,20 @@ class ApiClient {
       },
     });
 
-    // Add request interceptor to include auth token
+    // Add request interceptor to force HTTP for localhost and include auth token
     this.client.interceptors.request.use(
       (config) => {
+        // Force HTTP protocol for localhost URLs
+        if (config.url && config.url.includes('localhost')) {
+          config.url = config.url.replace(/^https:\/\//, 'http://');
+        }
+        if (config.baseURL && config.baseURL.includes('localhost')) {
+          config.baseURL = config.baseURL.replace(/^https:\/\//, 'http://');
+        }
+
+        // Debug logging for URL issues
+        console.log('API Request URL:', config.baseURL + config.url);
+
         if (AuthAPI.isAuthenticated()) {
           const token = AuthAPI.getToken();
           if (token) {

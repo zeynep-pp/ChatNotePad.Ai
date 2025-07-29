@@ -773,6 +773,8 @@ function SmartNotePageContent() {
 
   // Diff syncing functions
   const handleEditorScroll = (scrollTop: number) => {
+
+     
     // Sync diff viewer scroll with a slight delay to avoid conflicts
     if (diffViewerRef.current) {
       setTimeout(() => {
