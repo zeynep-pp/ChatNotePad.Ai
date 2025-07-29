@@ -29,7 +29,7 @@ export function middleware(request: NextRequest) {
       [
         "default-src 'self'",
         "script-src 'self' 'unsafe-inline' https://vercel.live https://cdn.jsdelivr.net", // Allow Next.js inline scripts, Vercel and Monaco CDN
-        "style-src 'self' 'unsafe-inline'",
+        "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
         "font-src 'self' data:",
         "img-src 'self' data: blob:",
         "connect-src 'self' https:",
