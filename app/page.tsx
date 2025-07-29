@@ -136,10 +136,12 @@ function SmartNotePageContent() {
         const fetchVersionInfo = async () => {
           try {
             const response = await axios.get(`/api/v1/notes/${noteData.id}/versions`);
-            // Handle both response.data.versions and response.data directly
-            const versionsData = response.data.versions || response.data || [];
-            if (versionsData && versionsData.length > 0) {
-              const versionCount = versionsData.length;
+            console.log('API Response:', response.data); // Debug log
+            
+            // Use the total field if available, otherwise count versions array
+            const versionCount = response.data.total || response.data.versions?.length || 0;
+            
+            if (versionCount > 0) {
               setTotalVersions(versionCount);
               setCurrentVersion(versionCount); // Set to latest version
               console.log(`✅ Loaded ${versionCount} versions for note ${noteData.id}`);
