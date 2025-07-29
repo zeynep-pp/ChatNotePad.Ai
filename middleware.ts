@@ -28,7 +28,7 @@ export function middleware(request: NextRequest) {
       'Content-Security-Policy',
       [
         "default-src 'self'",
-        "script-src 'self'", // No unsafe-eval in production
+        "script-src 'self' 'unsafe-inline' https://vercel.live", // Allow Next.js inline scripts and Vercel
         "style-src 'self' 'unsafe-inline'",
         "font-src 'self' data:",
         "img-src 'self' data: blob:",
