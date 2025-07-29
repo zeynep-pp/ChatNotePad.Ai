@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import apiClient from '../lib/api';
+import { RateLimitError } from '../lib/apiClient';
 
 interface TranslationRequest {
   text: string;
@@ -34,8 +35,8 @@ export const useTranslation = () => {
     setRateLimitInfo(null);
 
     try {
-      const response = await apiClient.post<TranslationResponse>('/api/v1/ai/translate', request);
-      return response.data;
+      const response = await apiClient.post<TranslationResponse>('/ai/translate', request);
+      return response;
     } catch (err: any) {
       if (err instanceof RateLimitError) {
         setError(`Rate limit exceeded. Try again in ${formatResetTime(err.resetTime)}`);
