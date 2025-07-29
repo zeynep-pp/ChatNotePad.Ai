@@ -50,7 +50,7 @@ export default function VersionIndicator({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <span className="text-gray-700 dark:text-gray-300">
-            v{currentVersion} of {totalVersions}
+            v{totalVersions} of {totalVersions}
           </span>
         </button>
       </div>

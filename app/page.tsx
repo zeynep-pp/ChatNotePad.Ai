@@ -131,6 +131,25 @@ function SmartNotePageContent() {
         setUserTags(noteData.tags?.filter((tag: string) => tag !== 'ai-generated') || []);
         setIsFavorite(noteData.is_favorite || false);
         setNoteTitle(noteData.title || '');
+        
+        // Fetch version information for existing note
+        const fetchVersionInfo = async () => {
+          try {
+            const response = await axios.get(`/api/v1/notes/${noteData.id}/versions`);
+            // Handle both response.data.versions and response.data directly
+            const versionsData = response.data.versions || response.data || [];
+            if (versionsData && versionsData.length > 0) {
+              const versionCount = versionsData.length;
+              setTotalVersions(versionCount);
+              setCurrentVersion(versionCount); // Set to latest version
+              console.log(`✅ Loaded ${versionCount} versions for note ${noteData.id}`);
+            }
+          } catch (error) {
+            console.error('Failed to fetch version info:', error);
+          }
+        };
+        
+        fetchVersionInfo();
         localStorage.removeItem('editingNote');
       } catch (error) {
         console.error('Failed to parse editing note:', error);
@@ -917,14 +936,6 @@ function SmartNotePageContent() {
                   title="Diff Viewer (Ctrl+Shift+D)"
                 >
                   Diff
-                </button>
-                <button
-                  onClick={() => setShowTranslationModal(true)}
-                  disabled={!originalText.trim()}
-                  className="px-2 py-1 text-xs bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 rounded hover:bg-purple-200 dark:hover:bg-purple-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  title="Translate (Ctrl+Shift+T)"
-                >
-                  Translate
                 </button>
                 <button
                   onClick={() => {

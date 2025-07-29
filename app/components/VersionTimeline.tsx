@@ -58,7 +58,9 @@ export default function VersionTimeline({
     setLoading(true);
     try {
       const response = await axios.get(`/api/v1/notes/${noteId}/versions`);
-      setVersions(response.data.versions || []);
+      // Handle both response.data.versions and response.data directly
+      const versionsData = response.data.versions || response.data || [];
+      setVersions(versionsData);
     } catch (error) {
       console.error('Error fetching versions:', error);
       // For testing purposes, show mock data when API fails
@@ -273,7 +275,7 @@ export default function VersionTimeline({
                       <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
                         <span>{formatFileSize(version.file_size || 0)}</span>
                         <span className="font-mono bg-gray-100 dark:bg-gray-700 px-1 rounded">
-                          {version.checksum?.substring(0, 8) || 'N/A'}
+                          {version.checksum?.substring(0, 8) || version.id?.substring(0, 8) || '--------'}
                         </span>
                       </div>
                       
