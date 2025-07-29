@@ -7,7 +7,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "vercel-build": "pnpm install --no-lockfile --include=dev && next build"
+    "vercel-build": "next build"
   },
   "keywords": [
     "ai",
