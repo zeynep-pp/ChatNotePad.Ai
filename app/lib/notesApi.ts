@@ -12,7 +12,8 @@ import {
 
 // Helper function to get the correct backend URL
 const getBackendUrl = (endpoint: string) => {
-  return `http://localhost:8000/api/v1${endpoint}`;
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  return `${baseUrl}/api/v1${endpoint}`;
 };
 
 export interface ExportRequest {
